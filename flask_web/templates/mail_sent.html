@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}보낸메일함 - SANAE AI{% endblock %}
+
+{% block content %}
+<style>
+    /* 1. 레이아웃 보정 */
+    .email-wrapper {
+        margin-left: -30px !important;
+    }
+    .email-sidebar {
+        width: 200px !important;
+        min-width: 200px !important;
+    }
+    /* ⚡ 수정: email-main-area에 padding: 0 및 flex 속성 추가 */
+    .email-main-area {
+        flex: 1;
+        padding: 0; /* 받은메일함과 통일: 툴바가 끝까지 확장됨 */
+        background-color: #fff;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    /* 2. [핵심 수정] 본문 텍스트 겹침 해결 & 가독성 향상 */
+    .doc-body {
+        font-size: 15px;
+        line-height: 1.8 !important; /* 줄 간격 넓게 (겹침 해결) */
+        color: #333;
+        padding: 20px 0;
+    }
+
+    .content-text {
+        white-space: pre-wrap; /* 줄바꿈 보존 */
+        word-break: break-all; /* 긴 단어 줄바꿈 */
+        line-height: 1.8 !important; /* 이중 안전장치 */
+    }
+
+    /* 3. 네이버 스타일 헤더 */
+    .naver-doc-header { margin-bottom: 20px; }
+    .naver-subject-row { display: flex; align-items: center; margin-bottom: 15px; }
+    .naver-subject-text { font-size: 18px; font-weight: 700; color: #000; margin-left: 8px; }
+
+    .naver-meta-table { font-size: 13px; color: #333; }
+    .naver-meta-row { display: flex; margin-bottom: 8px; }
+    .meta-label { width: 80px; color: #888; }
+
+    .sender-pill { background: #eaf4fc; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; }
+    .recipient-badge { background: #f0f0f0; padding: 1px 6px; border-radius: 4px; font-size: 11px; color: #555; margin-right: 4px; }
+
+    .doc-divider { border: 0; border-top: 1px solid #e5e5e5; margin: 20px 0; }
+
+    /* 4. AI 리포트 스타일 */
+    .ai-report-section { background: #fcfcfc; border: 1px solid #eee; border-radius: 12px; padding: 20px; margin-top: 30px; }
+    .ai-dashboard-grid { display: grid; grid-template-columns: 1fr 1fr 260px; gap: 20px; }
+    .ai-card { background: #fff; border: 1px solid #e1e1e1; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; }
+    .ai-card-label { font-size: 12px; font-weight: 700; color: #00A1E9; margin-bottom: 10px; }
+
+    /* 로딩 스피너 */
+    .spinner-area { text-align: center; color: #999; font-size: 13px; padding: 10px; }
+</style>
+
+<div class="email-wrapper">
+
+  <!-- ✅ 사이드바: mail_inbox / mail_write와 동일 -->
+  <aside class="email-sidebar">
+    <a href="/mail_write" class="btn-compose">메일 쓰기</a>
+    <ul class="email-menu-list">
+      <li><a href="/mail_inbox" class="email-menu-item"><div><i class="fa-solid fa-inbox"></i> 받은메일함</div></a></li>
+      <li><a href="#" class="email-menu-item"><div><i class="fa-regular fa-star"></i> 중요 메일함</div></a></li>
+      <li><a href="/mail_sent" class="email-menu-item active"><div><i class="fa-regular fa-paper-plane"></i> 보낸메일함</div></a></li>
+      <li><a href="/mail_drafts" class="email-menu-item"><div><i class="fa-regular fa-file-lines"></i> 임시보관함</div></a></li>
+      <li><a href="/mail_spam" class="email-menu-item"><div><i class="fa-solid fa-triangle-exclamation"></i> 스팸메일함</div></a></li>
+      <li><a href="/mail_trash" class="email-menu-item"><div><i class="fa-regular fa-trash-can"></i> 휴지통</div></a></li>
+    </ul>
+  </aside>
+
+  <main class="email-main-area">
+
+    <!-- ✅ 툴바도 다른 페이지 느낌으로 -->
+    <div class="email-toolbar border-bottom" style="height:54px; padding:0 20px;">
+      <div class="toolbar-left gap-2">
+        <span class="fw-bold" style="font-size:14px;">보낸메일함</span>
+        <div class="divider-vertical mx-2"></div>
+        <a href="/mail_write" class="btn-tool-naver">
+          <i class="fa-regular fa-pen-to-square me-1"></i> 새 메일
+        </a>
+      </div>
+      <div class="toolbar-right" style="font-size:12px; color:#888;">
+        {% if sent_mails is defined %}총 {{ sent_mails|length }}건{% endif %}
+      </div>
+    </div>
+
+    <div class="email-scroll-area">
+
+      <div class="mail-list-header">
+        <div class="col-check"><input type="checkbox" disabled></div>
+        <div class="col-to">받는 사람</div>
+        <div class="col-content">제목</div>
+        <div class="col-date">날짜</div>
+      </div>
+
+      {% if sent_mails and sent_mails|length > 0 %}
+        {% for mail in sent_mails %}
+          <div class="mail-item" onclick="location.href='{{ url_for('mail_sent_view', idx=loop.index0) }}'">
+
+            <div class="col-check" onclick="event.stopPropagation();">
+              <input type="checkbox" class="mail-checkbox" value="{{ loop.index0 }}">
+            </div>
+
+            <div class="col-to">
+              {% set to_val = (mail.receivers or '-') %}
+              <div class="avatar-circle">{{ to_val[0] }}</div>
+              <div style="min-width:0;">
+                <div class="to-text">{{ mail.receivers or '-' }}</div>
+                {% if mail.cc %}
+                  <div class="preview-text">CC: {{ mail.cc }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="col-content">
+              <div class="subject-text">{{ mail.subject or '(제목 없음)' }}</div>
+              {% if mail.content %}
+                <div class="preview-text">{{ mail.content|striptags|truncate(80, True, '…') }}</div>
+              {% endif %}
+            </div>
+
+            <div class="col-date">
+              {% if mail.received_at %}
+                {{ mail.received_at|relative_time }}
+              {% else %}
+                -
+              {% endif %}
+            </div>
+
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="text-center text-muted" style="padding:40px;">
+          보낸 메일이 없습니다.
+        </div>
+      {% endif %}
+
+    </div>
+  </main>
+</div>
+{% endblock %}

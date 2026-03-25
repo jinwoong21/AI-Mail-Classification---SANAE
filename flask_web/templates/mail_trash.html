@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}휴지통 - SANAE AI{% endblock %}
+
+{% block content %}
+<style>
+    /* mail_inbox 스타일 상속 */
+    .email-wrapper { margin-left: -30px !important; }
+    .email-sidebar { width: 200px !important; min-width: 200px !important; }
+    .email-main-area { flex: 1; padding: 20px 30px; background-color: #fff; height: 100%; overflow-y: auto; }
+</style>
+
+<div class="email-wrapper">
+    <aside class="email-sidebar">
+        <a href="/mail_write" class="btn-compose">메일 쓰기</a>
+        <ul class="email-menu-list">
+            <li><a href="/mail_inbox" class="email-menu-item"><div><i class="fa-solid fa-inbox"></i> 받은메일함</div></a></li>
+            <li><a href="#" class="email-menu-item"><div><i class="fa-regular fa-star"></i> 중요 메일함</div></a></li>
+            <li><a href="/mail_sent" class="email-menu-item"><div><i class="fa-regular fa-paper-plane"></i> 보낸메일함</div></a></li>
+            <li><a href="/mail_drafts" class="email-menu-item"><div><i class="fa-regular fa-file-lines"></i> 임시보관함</div></a></li>
+            <li><a href="/mail_spam" class="email-menu-item"><div><i class="fa-solid fa-triangle-exclamation"></i> 스팸메일함</div></a></li>
+
+            <li>
+                <a href="/mail_trash" class="email-menu-item active">
+                    <div><i class="fa-regular fa-trash-can"></i> 휴지통</div>
+                    <span class="menu-badge active">{{ emails|length }}</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <main class="email-main-area">
+        <div class="email-toolbar">
+            <div class="toolbar-left">
+                <input type="checkbox" id="checkAll" style="margin-right: 5px;">
+                <button class="tool-btn" onclick="moveSelected(0)"><i class="fa-solid fa-trash-can-arrow-up"></i> 복원</button>
+                <button class="tool-btn" style="color: #dc3545;"><i class="fa-solid fa-ban"></i> 영구 삭제</button>
+            </div>
+            <div class="toolbar-right">
+                <div style="font-size: 12px; color: #888;">휴지통 메일은 30일 후 자동 삭제됩니다.</div>
+            </div>
+        </div>
+
+        <div class="email-scroll-area">
+            <div class="mail-list-header">
+                <div class="col-check" style="visibility: hidden;"></div>
+                <div class="col-avatar"></div>
+                <div class="col-content">메일 내용 (보낸사람/제목)</div>
+                <div class="col-category">원래 위치</div>
+                <div class="col-date">삭제된 날짜</div>
+            </div>
+
+            {% for email in emails %}
+            <div class="mail-item" style="opacity: 0.8;"> <div class="col-check" onclick="event.stopPropagation();">
+                    <input type="checkbox" class="mail-checkbox" value="{{ email.id }}">
+                    <i class="fa-regular fa-star star-icon" style="color:#ccc;"></i>
+                </div>
+
+                <div class="col-avatar">
+                    <div class="avatar-circle" style="background-color: #999;">
+                        {{ email.sender_name[0] }}
+                    </div>
+                </div>
+
+                <div class="col-content">
+                    <div class="sender-row mb-1">
+                        <span class="sender-name text-muted">{{ email.sender_name }}</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="subject-text text-truncate text-muted" style="text-decoration: line-through;">{{ email.subject }}</span>
+                    </div>
+                </div>
+
+                <div class="col-category">
+                    <span class="badge-category" style="background:#eee; color:#666;">휴지통</span>
+                </div>
+
+                <div class="col-date">
+                    {{ email.received_at | relative_time }}
+                </div>
+            </div>
+            {% else %}
+            <div style="padding: 100px; text-align: center; color: #999;">
+                <i class="fa-regular fa-trash-can mb-3" style="font-size: 48px; opacity: 0.2;"></i>
+                <p>휴지통이 비어있습니다.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+</div>
+
+<script>
+    // 통합 이동 함수 (0:복원, 1:보관, 2:휴지통)
+    async function moveSelected(targetType) {
+        const checkboxes = document.querySelectorAll('.mail-checkbox:checked');
+        const ids = Array.from(checkboxes).map(cb => cb.value);
+
+        if (ids.length === 0) {
+            alert("메일을 선택해주세요.");
+            return;
+        }
+
+        let actionName = targetType === 0 ? "복원" : (targetType === 1 ? "보관" : "삭제");
+        if (!confirm(`${ids.length}개의 메일을 ${actionName} 하시겠습니까?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/move_mails', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: ids, target_type: targetType })
+            });
+
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                alert(`${actionName} 완료!`);
+                location.reload();
+            } else {
+                alert("오류 발생: " + result.message);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("서버 통신 오류");
+        }
+    }
+</script>
+{% endblock %}

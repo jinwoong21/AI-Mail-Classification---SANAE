@@ -1,0 +1,355 @@
+{% extends "base.html" %}
+
+{% block title %}받은메일함 - SANAE AI{% endblock %}
+
+{% block content %}
+<style>
+  /* ✅ 다른 메일 페이지(mail_detail/mail_write 등)와 동일한 레이아웃 보정 */
+  .email-wrapper { margin-left: -30px !important; }
+  .email-sidebar { width: 200px !important; min-width: 200px !important; }
+
+  /* (Inbox 전용) 파이프라인 패널이 아래로 붙도록만 flex 처리 */
+  .email-sidebar { display: flex; flex-direction: column; }
+
+  /* ✅ Inbox 전용 UI만 유지 */
+  .pipeline-panel {
+    margin-top: auto; /* 사이드바 맨 아래로 */
+    background: #fff;
+    border: 1px solid #e1e4e8;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
+  .pipeline-label { font-size: 11px; font-weight: 800; color: #888; letter-spacing: -0.5px; }
+
+  .status-led {
+    width: 8px; height: 8px; border-radius: 50%;
+    display: inline-block; transition: all 0.3s ease;
+  }
+  .status-led.off { background-color: #ccc; }
+  .status-led.on {
+    background-color: #00C73C;
+    box-shadow: 0 0 6px #00C73C;
+    animation: pulse-green 1.5s infinite;
+  }
+  @keyframes pulse-green { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+</style>
+
+
+<div class="email-wrapper">
+    <aside class="email-sidebar">
+        <a href="/mail_write" class="btn-compose">메일 쓰기</a>
+        <ul class="email-menu-list">
+            <li>
+                <a href="/mail_inbox" class="email-menu-item active">
+                    <div><i class="fa-solid fa-inbox"></i> 받은메일함</div>
+                    <span class="menu-badge active">{{ emails|length }}</span>
+                </a>
+            </li>
+            <li><a href="#" class="email-menu-item"><div><i class="fa-regular fa-star"></i> 중요 메일함</div></a></li>
+             <li><a href="/mail_sent" class="email-menu-item"><div><i class="fa-regular fa-paper-plane"></i> 보낸메일함</div></a></li>
+             <li><a href="/mail_drafts" class="email-menu-item"><div><i class="fa-regular fa-file-lines"></i> 임시보관함</div></a></li>
+             <li><a href="/mail_spam" class="email-menu-item"><div><i class="fa-solid fa-triangle-exclamation"></i> 스팸메일함</div></a></li>
+             <li><a href="/mail_trash" class="email-menu-item"><div><i class="fa-regular fa-trash-can"></i> 휴지통</div></a></li>
+        </ul>
+
+        <div class="pipeline-panel mt-4 pt-3 border-top">
+            <div class="d-flex justify-content-between align-items-center mb-2 px-2">
+                <span class="pipeline-label">DATA PIPELINE</span>
+                <div id="status-indicator" class="status-led off"></div>
+            </div>
+
+            <p id="status-text" class="text-center text-muted mb-2" style="font-size: 11px;">대기 중</p>
+
+            <div class="d-flex gap-1 px-1">
+                <button onclick="togglePipeline('start')" class="btn btn-sm btn-primary w-50" style="font-size: 11px;">
+                    <i class="fa-solid fa-play me-1"></i>가동
+                </button>
+                <button onclick="togglePipeline('stop')" class="btn btn-sm btn-outline-danger w-50" style="font-size: 11px;">
+                    <i class="fa-solid fa-stop me-1"></i>중지
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <main class="email-main-area">
+
+        <div class="email-toolbar">
+            <div class="toolbar-left">
+                <input type="checkbox" style="margin-right: 5px;" onclick="toggleAll(this)">
+                <button class="tool-btn"><i class="fa-regular fa-envelope-open"></i> 읽음</button>
+
+                <button class="tool-btn" onclick="moveSelected(2)">
+                    <i class="fa-regular fa-trash-can"></i> 삭제
+                </button>
+                <button class="tool-btn" onclick="moveSelected(1)">
+                    <i class="fa-solid fa-box-archive"></i> 보관
+                </button>
+
+                <div style="width: 1px; height: 16px; background: #ddd; margin: 0 5px;"></div>
+                <button class="tool-btn"><i class="fa-solid fa-tag"></i> 태그</button>
+            </div>
+            <div class="toolbar-right">
+                <div class="filter-tabs-small">
+                    <button class="filter-btn-sm active">전체</button>
+                    <button class="filter-btn-sm">🔥 Urgent</button>
+                    <button class="filter-btn-sm">🚨 민원</button>
+                </div>
+                <a href="/mail_inbox" class="tool-btn"><i class="fa-solid fa-rotate-right"></i></a>
+                <div style="font-size: 12px; color: #888;">1-{{ emails|length }} / {{ emails|length }}</div>
+            </div>
+        </div>
+
+        <div class="email-scroll-area">
+
+            <div class="mail-list-header">
+                <div class="col-check" style="visibility: hidden;"></div>
+                <div class="col-avatar"></div>
+                <div class="col-content">메일 내용 (보낸사람/제목)</div>
+                <div class="col-category">분류</div>
+                <div class="col-sentiment">감정 분석</div>
+                <div class="col-date">날짜</div>
+                <div class="col-assignee">담당자</div>
+            </div>
+
+            {% for email in emails %}
+            <div class="mail-item {% if not email.is_read %}unread{% endif %}
+                {% if email.priority_level >= 2 or (email.priority_level == 1 and email.is_complaint) %}priority-critical
+                {% elif email.priority_level == 1 or email.is_complaint %}priority-high
+                {% else %}priority-normal{% endif %}"
+                onclick="location.href='/mail_detail/{{ email.id }}'">
+
+                <div class="col-check" onclick="event.stopPropagation();">
+                    <input type="checkbox" class="mail-checkbox" value="{{ email.id }}">
+                    <i class="fa-star {% if email.is_starred %}fas active{% else %}far{% endif %} star-icon"></i>
+                </div>
+
+                <div class="col-avatar">
+                    <div class="avatar-circle
+                        {% if loop.index % 4 == 0 %}bg-soft-blue
+                        {% elif loop.index % 4 == 1 %}bg-soft-red
+                        {% elif loop.index % 4 == 2 %}bg-soft-green
+                        {% else %}bg-soft-orange{% endif %}">
+                        {{ email.sender_name[0] if email.sender_name else '?' }}
+                    </div>
+                </div>
+
+                <div class="col-content">
+                    <div class="sender-row mb-1">
+                      <span class="sender-name">{{ email.sender_name }}</span>
+
+                      {% if email.ai_dept is not none %}
+                        <span class="badge-ai badge-dept">{{ email.display_dept }}</span>
+                      {% endif %}
+
+                      {% if email.priority_level >= 2 or (email.priority_level == 1 and email.is_complaint) %}
+                        <span class="badge-ai badge-critical ms-1">🔥 Critical</span>
+                      {% elif email.priority_level == 1 %}
+                        <span class="badge-ai badge-urgent ms-1">🔥 Urgent</span>
+                      {% endif %}
+
+                      {% if email.is_complaint %}
+                        <span class="badge-ai badge-complaint ms-1">🚨 민원</span>
+                      {% endif %}
+                    </div>
+
+                    <div class="d-flex align-items-center">
+                        <span class="subject-text text-truncate">{{ email.subject }}</span>
+                        {% if email.ai_summary %}
+                            <i class="fa-solid fa-wand-magic-sparkles summary-icon ms-2" title="{{ email.ai_summary }}"></i>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% set ch = email.display_channel %}
+                {% if ch == '사내업무' %}
+                  <span class="badge-category cat-internal" style="margin:0;">🏢 사내업무</span>
+                {% elif ch == '거래처' %}
+                  <span class="badge-category cat-client" style="margin:0;">🤝 거래처</span>
+                {% else %}
+                  <span class="badge-category cat-general" style="margin:0;">📄 사내일반</span>
+                {% endif %}
+
+
+                <div class="col-sentiment" title="점수: {{ email.sentiment_score }}점">
+                    <span style="font-size: 14px; min-width: 20px;">
+                        {% if email.sentiment_score >= 70 %}😊
+                        {% elif email.sentiment_score <= 30 %}😡
+                        {% else %}😐{% endif %}
+                    </span>
+
+                    <div class="sentiment-track">
+                        <div class="sentiment-fill
+                            {% if email.sentiment_score >= 70 %}sentiment-pos
+                            {% elif email.sentiment_score <= 30 %}sentiment-neg
+                            {% else %}sentiment-mid{% endif %}"
+                            style="width: {{ email.sentiment_score }}%;">
+                        </div>
+                    </div>
+
+                    <span style="font-size: 11px; color: #888; margin-left: 6px; min-width: 30px; text-align: right; font-weight: 600;">
+                        {{ email.sentiment_score }}%
+                    </span>
+                </div>
+
+                <div class="col-date">
+                    {{ email.received_at | relative_time }}
+                </div>
+
+                <div class="col-assignee">
+                    {% if email.ai_assignee_level == 2 %}
+                        <span class="badge-ai badge-assignee">👑 책임자</span>
+                    {% elif email.ai_assignee_level == 1 %}
+                        <span class="badge-ai badge-assignee">👔 관리자</span>
+                    {% else %}
+                        <span class="badge-ai badge-assignee">👨‍💻 실무자</span>
+                    {% endif %}
+                </div>
+
+                <div class="hover-actions" onclick="event.stopPropagation();">
+                    <div class="btn-icon-action" title="읽음"><i class="fa-regular fa-envelope-open"></i></div>
+                    <div class="btn-icon-action" title="삭제" onclick="moveSelected(2)"><i class="fa-regular fa-trash-can"></i></div>
+                </div>
+
+            </div>
+            {% else %}
+            <div style="padding: 100px; text-align: center; color: #999;">
+                <i class="fa-regular fa-envelope mb-3" style="font-size: 48px; opacity: 0.2;"></i>
+                <p>표시할 메일이 없습니다.</p>
+            </div>
+            {% endfor %}
+
+        </div>
+    </main>
+</div>
+
+<script>
+    // 1. 레이아웃 자동 보정 (왼쪽 짤림 해결)
+    document.addEventListener("DOMContentLoaded", async function() {
+        // (1) .content 여백 제거 (핵심)
+
+        // (2) 파이프라인 상태 확인
+        await updatePipelineUI();
+    });
+
+    // 2. 파이프라인 상태 UI 업데이트 (서버에 확인)
+    async function updatePipelineUI() {
+        const indicator = document.getElementById('status-indicator');
+        const statusText = document.getElementById('status-text');
+
+        try {
+            const response = await fetch('/api/pipeline_status');
+            const data = await response.json();
+
+            if (data.status === 'running') {
+                indicator.classList.remove('off');
+                indicator.classList.add('on');
+                statusText.innerText = "⚡ 데이터 수집 중...";
+                statusText.style.color = "#00C73C";
+                statusText.style.fontWeight = "bold";
+            } else {
+                indicator.classList.remove('on');
+                indicator.classList.add('off');
+                statusText.innerText = "대기 중";
+                statusText.style.color = "#6c757d";
+                statusText.style.fontWeight = "normal";
+            }
+        } catch (error) {
+            console.error("Pipeline status check failed:", error);
+        }
+    }
+
+    // 3. 파이프라인 가동/중지 버튼 클릭 시
+    async function togglePipeline(action) {
+        const indicator = document.getElementById('status-indicator');
+        const statusText = document.getElementById('status-text');
+
+        // UI 즉시 반응
+        if (action === 'start') {
+            statusText.innerText = "🚀 가동 요청 중...";
+            statusText.style.color = "#007bff";
+        } else {
+            statusText.innerText = "🛑 중지 요청 중...";
+            statusText.style.color = "#dc3545";
+        }
+
+        try {
+            const url = action === 'start' ? '/api/start_pipeline' : '/api/stop_pipeline';
+            const response = await fetch(url, { method: 'POST' });
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                if (action === 'start') {
+                    // 가동 성공
+                    indicator.classList.remove('off');
+                    indicator.classList.add('on');
+                    statusText.innerText = "⚡ 데이터 수집 중...";
+                    statusText.style.color = "#00C73C";
+                    statusText.style.fontWeight = "bold";
+                    alert("파이프라인 가동! (30초마다 데이터가 생성됩니다)");
+                } else {
+                    // 중지 성공
+                    indicator.classList.remove('on');
+                    indicator.classList.add('off');
+                    statusText.innerText = "대기 중";
+                    statusText.style.color = "#6c757d";
+                    statusText.style.fontWeight = "normal";
+                    alert("파이프라인이 중지되었습니다.");
+                }
+            } else {
+                alert("오류: " + data.message);
+                statusText.innerText = "오류 발생";
+            }
+        } catch (error) {
+            console.error(error);
+            alert("서버 통신 오류가 발생했습니다.");
+            statusText.innerText = "통신 오류";
+        }
+    }
+
+    // 4. 메일 선택 후 이동/삭제 (API 연동)
+    async function moveSelected(targetType) {
+        // targetType: 1(보관), 2(휴지통)
+        const checkboxes = document.querySelectorAll('.mail-checkbox:checked');
+        const ids = Array.from(checkboxes).map(cb => cb.value);
+
+        if (ids.length === 0) {
+            alert("메일을 선택해주세요.");
+            return;
+        }
+
+        let actionName = targetType === 1 ? "보관" : "휴지통으로 이동";
+        if (!confirm(`${ids.length}개의 메일을 ${actionName} 하시겠습니까?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/move_mails', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: ids, target_type: targetType })
+            });
+
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                alert("처리 완료!");
+                location.reload(); // 새로고침하여 목록 갱신
+            } else {
+                alert("오류 발생: " + result.message);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("서버 통신 중 오류가 발생했습니다.");
+        }
+    }
+
+    // 5. 전체 선택 토글
+    function toggleAll(source) {
+        checkboxes = document.querySelectorAll('.mail-checkbox');
+        for(var i=0, n=checkboxes.length;i<n;i++) {
+            checkboxes[i].checked = source.checked;
+        }
+    }
+</script>
+{% endblock %}
