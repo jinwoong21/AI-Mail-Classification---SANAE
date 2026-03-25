@@ -1,0 +1,683 @@
+{% extends "base.html" %}
+
+{% block title %}SANAE - AI 비서 대시보드{% endblock %}
+
+{% block content %}
+<style>
+    /* [Design System 5.1: Final Polish] */
+    :root {
+        --primary: #4A90E2;
+        --bg-body: #F4F6F8;
+        --surface: #ffffff;
+        --text-main: #191F28;
+        --text-sub: #8B95A1;
+        --border-soft: #F2F4F6;
+        --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.04);
+    }
+
+    body { background-color: var(--bg-body); color: var(--text-main); letter-spacing: -0.01em; }
+
+    /* Centering Container */
+    .main-container{
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 20px;
+
+      height: calc(100dvh - 140px); /* ← 필요하면 120~170 사이로 미세조정 */
+      display: flex;
+      flex-direction: column;
+    }
+
+    .dashboard-grid{
+      flex: 1;
+      min-height: 0;
+
+      display: grid;
+      grid-template-columns: 280px 1fr 320px;
+      gap: 24px;
+
+      align-items: stretch;     /* ★ 핵심: 컬럼 높이 통일 */
+      padding-bottom: 0;        /* 밑으로 삐져나오는 스크롤 원인 제거 */
+    }
+
+    .col-left, .col-center, .col-right{
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      min-height: 0;
+    }
+    .col-center > .card:last-child{
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* [Card] */
+    .card {
+        background: var(--surface);
+        border-radius: 20px;
+        box-shadow: var(--shadow-card);
+        padding: 24px;
+        border: 1px solid rgba(0,0,0,0.01);
+        position: relative; overflow: hidden;
+    }
+    .card-fill{
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .scroll-area{
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding-right: 6px; /* 스크롤바 여백 */
+    }
+    .mail-briefing-card{ height: 340px; display:flex; flex-direction:column; }
+    .profile-fixed{ height: 320px; }
+    .calendar-fixed{ height: 300px; }
+    .card-title {
+        font-size: 17px; font-weight: 700; color: var(--text-main);
+        margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;
+        z-index: 1; position: relative;
+    }
+
+    /* [Left Column] */
+    .chart-container { position: relative; width: 140px; height: 140px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; }
+    .donut-chart { width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(#4A90E2 0% 85%, #F2F4F6 85% 100%); display: flex; align-items: center; justify-content: center; }
+    .donut-inner { width: 100px; height: 100px; background: white; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .chart-number { font-size: 28px; font-weight: 800; color: #333; line-height: 1; }
+    .chart-label { font-size: 12px; color: #888; margin-top: 2px; }
+
+    .stat-row { display: flex; justify-content: space-between; margin-top: 15px; padding: 15px 0 0; border-top: 1px dashed #eee; }
+    .stat-item { text-align: center; width: 50%; }
+    .stat-val { font-size: 18px; font-weight: 700; color: #333; }
+    .stat-lbl { font-size: 11px; color: #999; margin-top: 4px; }
+
+    .app-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px dashed #eee; }
+    .app-item:last-child { border-bottom: none; }
+    .app-btn { background: #EBF7FF; color: var(--primary); padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; border: none; cursor: pointer; transition: 0.2s; }
+    .app-btn:hover { background: var(--primary); color: white; }
+    .app-btn.hold { background: #F2F4F6; color: #666; }
+    .app-btn.hold:hover { background: #666; color: white; }
+
+    .quick-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .quick-tile { background: #F9FAFB; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
+    .quick-tile:hover { background: white; border-color: var(--primary); box-shadow: 0 4px 10px rgba(74, 144, 226, 0.15); transform: translateY(-2px); }
+    .tile-icon { font-size: 20px; color: var(--primary); }
+    .tile-name { font-size: 13px; font-weight: 600; color: #555; }
+
+    /* [Center: AI Mail] */
+    .filter-tabs { display: flex; gap: 5px; background: #F2F4F6; padding: 4px; border-radius: 12px; }
+    .filter-tab { padding: 6px 12px; font-size: 12px; font-weight: 600; color: #666; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+    .filter-tab.active { background: white; color: #333; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+    .mail-item { border-bottom: 1px solid #f0f0f0; padding: 16px 0; cursor: pointer; display: block; }
+    .mail-item.hidden { display: none; }
+    .mail-item:last-child { border-bottom: none; }
+
+    .mail-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+    .mail-left { display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden; }
+    .mail-right { display: flex; align-items: center; gap: 8px; }
+
+    .tag-badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; white-space: nowrap; }
+    .tag-red { color: #F04452; background: #FFF1F1; }
+    .tag-orange { color: #FF9800; background: #FFF4E5; }
+    .tag-blue { color: #3182F6; background: #E8F3FF; }
+    .tag-purple { color: #7B4DFF; background: #F3EFFF; }
+
+    .summary-btn { font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 6px; background: #F0F7FF; color: #4A90E2; border: none; cursor: pointer; }
+    .summary-btn:hover { background: #4A90E2; color: white; }
+
+    .mail-subject { font-size: 15px; font-weight: 600; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mail-summary { display: none; margin-top: 12px; background: #F8F9FA; padding: 14px; border-radius: 10px; font-size: 13px; color: #555; line-height: 1.5; border-left: 3px solid var(--primary); }
+    .mail-item.active .mail-summary { display: block; animation: slideDown 0.2s ease; }
+    .mail-item.active .chevron { transform: rotate(180deg); }
+    .chevron { transition: 0.2s; color: #bbb; font-size: 12px; }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* [Center: Notice] */
+    .tab-nav-container { background: #F2F4F6; padding: 4px; border-radius: 12px; display: inline-flex; margin-bottom: 20px; }
+    .tab-btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; color: #666; cursor: pointer; border: none; background: transparent; transition: 0.2s; }
+    .tab-btn.active { background: white; color: #333; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+    .notice-list { display: none; min-height: 0; }
+    .notice-list.active { display: block; flex: 1; overflow: auto; }
+    .notice-row { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #f9f9f9; cursor: pointer; }
+    .notice-row:hover .n-subject { color: var(--primary); }
+    .n-badge { width: 50px; text-align: center; font-size: 11px; font-weight: 700; padding: 4px 0; border-radius: 6px; margin-right: 12px; flex-shrink: 0; }
+    .n-subject { flex: 1; font-size: 14px; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .n-date { font-size: 12px; color: #aaa; margin-left: 10px; min-width: 40px; text-align: right; }
+    .nb-blue { background: #E8F3FF; color: #3182F6; }
+    .nb-red { background: #FFF1F1; color: #F04452; }
+    .nb-gray { background: #F2F4F6; color: #6B7684; }
+    .nb-green { background: #EBFBF0; color: #23C16B; }
+
+    /* [Right: Unified Profile] */
+    .unified-profile-card { padding: 0; text-align: center; }
+    .profile-cover { position: absolute; top: 0; left: 0; width: 100%; height: 90px; background: linear-gradient(135deg, #4A90E2 0%, #0056b3 100%); }
+    .profile-content { position: relative; margin-top: 45px; padding: 0 24px 24px; }
+    .avatar-ring { width: 80px; height: 80px; margin: 0 auto 10px; border-radius: 50%; padding: 4px; background: white; box-shadow: 0 4px 15px rgba(0,0,0,0.1); position: relative; }
+    .avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background: #eee; }
+    .user-greeting { font-size: 18px; font-weight: 800; color: #191F28; margin-bottom: 2px; }
+    .user-team { font-size: 13px; font-weight: 600; color: #4A90E2; margin-bottom: 2px; }
+    .user-role { font-size: 12px; color: #888; margin-bottom: 15px; }
+
+    .ai-bubble-box { background: #F2F8FF; border: 1px solid #D6E8FF; border-radius: 12px; padding: 12px; margin-bottom: 20px; text-align: left; }
+    .ai-text { font-size: 13px; color: #4A6E99; line-height: 1.4; }
+    .action-row { display: flex; gap: 10px; }
+    .action-btn { flex: 1; background: #F9FAFB; border-radius: 12px; padding: 10px 0; cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
+    .action-btn:hover { background: white; border-color: #ddd; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    .action-num { font-size: 18px; font-weight: 800; color: #333; }
+    .action-label { font-size: 11px; color: #888; margin-top: 2px; }
+
+    /* [Right: Todo & Calendar] */
+    .todo-item { display: flex; align-items: flex-start; padding: 12px; margin-bottom: 8px; background: white; border: 1px solid #f0f0f0; border-radius: 12px; transition: 0.2s; cursor: pointer; }
+    .todo-item:hover { border-color: var(--primary); background: #F8F9FA; }
+    .chk-box { width: 18px; height: 18px; border: 2px solid #D1D6DB; border-radius: 6px; margin-right: 12px; margin-top: 2px; flex-shrink: 0; }
+
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px 0; text-align: center; margin-top: 10px; }
+    .cal-head { font-size: 12px; color: #bbb; margin-bottom: 5px; }
+    .cal-day { font-size: 13px; color: #333; width: 28px; height: 28px; line-height: 28px; margin: 0 auto; border-radius: 50%; cursor: pointer;}
+    .cal-day.active { background: var(--primary); color: white; font-weight: bold; }
+
+    /* =========================
+    ✅ Dashboard Polish Patch
+    ========================= */
+
+    /* 폰트/자간 통일 */
+    body{
+    font-family: Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI",
+               "Noto Sans KR","Apple SD Gothic Neo", Arial, sans-serif;
+    letter-spacing: -0.2px;
+    }
+
+    /* 컨테이너/그리드 간격 통일 */
+    .main-container{ max-width: 1440px; padding: 0 24px; }
+    .dashboard-grid{
+    grid-template-columns: 300px minmax(560px, 1fr) 340px;
+    gap: 26px;
+    }
+    .col-left, .col-center, .col-right{ gap: 26px; }
+
+    /* 카드 룰 통일 */
+    .card{
+    border-radius: 18px;
+    padding: 22px;
+    box-shadow: 0 6px 22px rgba(0,0,0,0.05);
+    }
+    .card-title{
+    font-size: 15px;
+    margin-bottom: 14px;
+    }
+
+    /* 리스트(결재/공지/메일/투두) 공통 row 룰 */
+    .list-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #F2F4F6;
+    }
+    .list-row:last-child{ border-bottom: 0; }
+
+    .muted{ color:#8B95A1; font-size:12px; }
+
+    /* 중요 메일 브리핑: 아이템 간격/라인 통일 */
+    .mail-item{ padding: 14px 0; }
+    .mail-subject{ font-size:14px; }
+    .mail-summary{ margin-top: 10px; padding: 12px; }
+
+    /* 공지 리스트: row 높이/정렬 통일 */
+    .notice-row{
+    padding: 11px 0;
+    border-bottom: 1px solid #F2F4F6;
+    }
+    .notice-row:last-child{ border-bottom: 0; }
+
+    /* ✅ TO DO LIST: "박스(네모)" 없애고 라인 리스트로 통일 */
+    #dashboard-todo-list .todo-item{
+    padding: 12px 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border-bottom: 1px solid #F2F4F6 !important;
+    }
+    #dashboard-todo-list .todo-item:last-child{ border-bottom: 0 !important; }
+
+    #dashboard-todo-list .chk-box{
+    width: 16px; height: 16px;
+    border: 1.5px solid #D1D6DB;
+    border-radius: 4px;
+    margin-top: 2px;
+    }
+    #dashboard-todo-list .chk-box.done{
+    background: #3182F6;
+    border-color: #3182F6;
+    }
+
+    #dashboard-todo-list .todo-title{
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.45;
+    color:#191F28;
+    }
+    #dashboard-todo-list .todo-title.done{
+    text-decoration: line-through;
+    opacity: .55;
+    }
+    /* ✅ Left 3카드도 깔끔하게: 위/아래는 고정, 가운데는 남는 높이 채우기 */
+    .left-progress{
+      flex: 0 0 auto;
+      height: auto;        /* 안전빵 */
+    }
+    .left-shortcut { height: 240px; }     /* 바로가기 */
+
+    /* 결재 대기는 남는 높이 다 먹고, 안에서만 스크롤 */
+    .left-approval{
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .left-approval .approval-list{
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding-right: 6px;
+    }
+    .left-approval .approval-footer{
+      margin-top: auto;
+    }
+
+    /* ✅ 바로가기도 고정 높이 싫으면 auto로 */
+    .left-shortcut{
+      flex: 0 0 auto;
+      height: auto;
+    }
+</style>
+
+<div class="main-container">
+    <div class="page-title" style="margin-bottom: 25px; padding: 20px 0 0 5px;">
+        <h2 style="font-size: 24px; font-weight: 800; color: #333;">EMAIL 대시보드</h2>
+    </div>
+
+    <div class="dashboard-grid">
+
+        <div class="col-left">
+
+          <!-- 1) 오늘의 업무량 (고정 높이) -->
+          <div class="card left-progress" style="text-align: center;">
+              <div class="card-title">지금 처리해야 할 메일</div>
+
+              <div class="chart-container">
+                <div class="donut-chart"
+                     style="background: conic-gradient(#4A90E2 0% {{ completion_rate }}%, #F2F4F6 {{ completion_rate }}% 100%);">
+                  <div class="donut-inner">
+                    <div class="chart-number">{{ completion_rate }}%</div>
+                    <div class="chart-label">처리율</div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="font-size: 13px; color: #666; margin-bottom: 15px;">
+                {% if unread_inbox == 0 %}
+                  "재현님, 받은메일함 올클리어! 😎"
+                {% elif urgent_unread == 0 %}
+                  "중요 메일은 0건! 일반부터 차근차근 ㄱㄱ"
+                {% elif urgent_unread <= 3 %}
+                  "중요 {{ urgent_unread }}건만 먼저 처리하면 됩니다 ⚡"
+                {% else %}
+                  "중요 메일 {{ urgent_unread }}건… 오늘은 보스전 🧨"
+                {% endif %}
+              </div>
+
+              <div class="stat-row">
+                <div class="stat-item" style="border-right: 1px solid #eee;">
+                  <div class="stat-val">{{ unread_inbox }}건</div>
+                  <div class="stat-lbl">미처리</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-val" style="color:#FF4D4F;">{{ urgent_unread }}건</div>
+                  <div class="stat-lbl">미처리 중요</div>
+                </div>
+              </div>
+          </div>
+
+
+
+
+          <!-- 2) 결재 대기 (남는 높이 먹고, 내부만 스크롤) -->
+          <div class="card left-approval">
+            <div class="card-title">결재 대기</div>
+
+            <!-- ✅ 여기만 스크롤 -->
+            <div class="approval-list">
+              <div class="app-item">
+                <div>
+                  <div style="font-weight:600; font-size:13px;">서버 증설 요청서 (API 클러스터)</div>
+                  <div style="font-size:11px; color:#999;">요청: 박대리(운영팀) <br> 2025.12.15 · 결재: 재현(개발팀)</div>
+                </div>
+                <button class="app-btn">승인</button>
+              </div>
+
+              <div class="app-item">
+                <div>
+                  <div style="font-weight:600; font-size:13px;">장비 구매 요청서 (개발 노트북 교체)</div>
+                  <div style="font-size:11px; color:#999;">요청: 최과장(재무팀) <br> 2025.12.14 · 결재: 재현(개발팀)</div>
+                </div>
+                <button class="app-btn hold">보류</button>
+              </div>
+
+              <div class="app-item">
+                <div>
+                  <div style="font-weight:600; font-size:13px;">배포 승인 요청 (v2.3.1 핫픽스)</div>
+                  <div style="font-size:11px; color:#999;">요청: 김대리(서비스팀) <br> 2025.12.13 · 결재: 재현(개발팀)</div>
+                </div>
+                <button class="app-btn">승인</button>
+              </div>
+
+              <div class="app-item">
+                <div>
+                  <div style="font-weight:600; font-size:13px;">접근 권한 신청 (Prod 로그 조회)</div>
+                  <div style="font-size:11px; color:#999;">요청: 정차장(보안팀) <br> 2025.12.12 · 결재: 재현(개발팀)</div>
+                </div>
+                <button class="app-btn">승인</button>
+              </div>
+
+              <div class="app-item">
+                <div>
+                  <div style="font-weight:600; font-size:13px;">외부 라이선스 사용 승인 (SDK 상용)</div>
+                  <div style="font-size:11px; color:#999;">요청: 이부장(기획팀) <br> 2025.12.10 · 결재: 재현(개발팀)</div>
+                </div>
+                <button class="app-btn hold">보류</button>
+              </div>
+            </div>
+            <!-- ✅ 항상 맨 아래 고정 -->
+            <div class="approval-footer" style="text-align: center; margin-top: 15px; font-size: 12px; color: #8B95A1; cursor: pointer;">
+              전체보기 <i class="fa-solid fa-chevron-right"></i>
+            </div>
+          </div>
+
+          <!-- 3) 바로가기 (고정 높이) -->
+          <div class="card left-shortcut">
+            <div class="card-title" style="font-size:15px;">바로가기</div>
+
+            <div class="quick-grid">
+              <div class="quick-tile">
+                <i class="fa-solid fa-plane tile-icon"></i>
+                <span class="tile-name">휴가신청</span>
+              </div>
+
+              <div class="quick-tile">
+                <i class="fa-solid fa-receipt tile-icon"></i>
+                <span class="tile-name">비용청구</span>
+              </div>
+
+              <div class="quick-tile">
+                <i class="fa-solid fa-file-contract tile-icon"></i>
+                <span class="tile-name">증명서</span>
+              </div>
+
+              <div class="quick-tile">
+                <i class="fa-solid fa-gear tile-icon" style="color:#666;"></i>
+                <span class="tile-name">설정</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+
+        <div class="col-center">
+            <div class="card">
+                <div class="card-title">
+                    중요 메일 브리핑
+                    <div class="filter-tabs">
+                        <div class="filter-tab active" onclick="filterMail('all', this)">전체</div>
+                        <div class="filter-tab" onclick="filterMail('urgent', this)" style="color:#F04452;">🔥 긴급</div>
+                        <div class="filter-tab" onclick="filterMail('general', this)">📫 일반</div>
+                    </div>
+                </div>
+
+                <div class="scroll-area">
+                  {% if important_mails and important_mails|length > 0 %}
+                    {% for m in important_mails %}
+                      {% set category = 'urgent' if m.priority_level >= 1 else 'general' %}
+
+                      <div class="mail-item" data-category="{{ category }}" onclick="toggleMail(this)">
+                        <div class="mail-header">
+                          <div class="mail-left">
+                            {% if m.priority_level >= 2 %}
+                              <span class="tag-badge tag-red">CRITICAL</span>
+                            {% elif m.priority_level == 1 %}
+                              <span class="tag-badge tag-red">긴급</span>
+                            {% endif %}
+
+                            {% if m.is_complaint %}
+                              <span class="tag-badge tag-orange">민원</span>
+                            {% endif %}
+
+                            <span class="mail-subject">{{ m.subject }}</span>
+                          </div>
+
+                          <div class="mail-right">
+                            <span class="summary-btn">
+                              {% if m.ai_summary and ('대기중' not in m.ai_summary) %}요약완료{% else %}요약대기{% endif %}
+                            </span>
+                            <i class="fa-solid fa-chevron-down chevron"></i>
+                          </div>
+                        </div>
+
+                        <div class="mail-summary">
+                          <i class="fa-solid fa-wand-magic-sparkles" style="color:#4A90E2; margin-right:6px;"></i>
+                          <strong>AI 요약:</strong>
+                          {{ (m.ai_summary if m.ai_summary else m.content)|truncate(160, True, '...') }}
+                        </div>
+                      </div>
+                    {% endfor %}
+                  {% else %}
+                    <div style="font-size:13px; color:#8B95A1;">아직 중요 메일이 없습니다.</div>
+                  {% endif %}
+                </div>
+            </div>
+
+            <div class="card" style="flex:1;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div class="tab-nav-container">
+                        <button class="tab-btn active" onclick="switchTab('all')">전체</button>
+                        <button class="tab-btn" onclick="switchTab('notice')">공지사항</button>
+                        <button class="tab-btn" onclick="switchTab('event')">경조/행사</button>
+                    </div>
+                    <div style="font-size:12px; color:#999; cursor:pointer; margin-bottom:20px;">더보기 +</div>
+                </div>
+
+                <div id="tab-all" class="notice-list active">
+                    <div class="notice-row"><span class="n-badge nb-blue">필독</span><span class="n-subject">2026년도 연봉 계약 갱신 일정 안내</span><span class="n-date">오늘</span></div>
+                    <div class="notice-row"><span class="n-badge nb-red">긴급</span><span class="n-subject">정보보호 교육 미이수자 수강 촉구</span><span class="n-date">12.14</span></div>
+                    <div class="notice-row"><span class="n-badge nb-gray">경조</span><span class="n-subject">[부고] 경영지원팀 박OO 대리 빙부상</span><span class="n-date">12.12</span></div>
+                    <div class="notice-row"><span class="n-badge nb-gray">공지</span><span class="n-subject">사내 카페테리아 리뉴얼 공사 일정</span><span class="n-date">12.10</span></div>
+                    <div class="notice-row"><span class="n-badge nb-green">동호회</span><span class="n-subject">25시즌 사내 풋살 동호회 신규 회원 모집</span><span class="n-date">11.30</span></div>
+                    <div class="notice-row"><span class="n-badge nb-blue">시스템</span><span class="n-subject">그룹웨어 정기 점검 안내 (금주 토)</span><span class="n-date">12.01</span></div>
+                    <div class="notice-row"><span class="n-badge nb-gray">인사</span><span class="n-subject">12월 신규 입사자 소개 및 OJT 일정</span><span class="n-date">11.28</span></div>
+                    <div class="notice-row"><span class="n-badge nb-green">동호회</span><span class="n-subject">사내 러닝클럽 연말 챌린지 참여자 모집</span><span class="n-date">12.07</span></div>
+                    <div class="notice-row"><span class="n-badge nb-gray">복지</span><span class="n-subject">연말 복지포인트 사용 마감 및 정산 안내</span><span class="n-date">12.05</span></div>
+                    <div class="notice-row" style="border:none;"><span class="n-badge nb-gray">복지</span><span class="n-subject">건강검진 미수검자 검진 안내 (~12/31)</span><span class="n-date">11.25</span></div>
+                </div>
+
+                <div id="tab-notice" class="notice-list">
+                     <div class="notice-row"><span class="n-badge nb-blue">필독</span><span class="n-subject">2026년도 연봉 계약 갱신 일정 안내</span><span class="n-date">오늘</span></div>
+                     <div class="notice-row"><span class="n-badge nb-red">긴급</span><span class="n-subject">정보보호 교육 미이수자 수강 촉구</span><span class="n-date">12.14</span></div>
+                     <div class="notice-row"><span class="n-badge nb-gray">공지</span><span class="n-subject">사내 카페테리아 리뉴얼 공사 일정</span><span class="n-date">12.10</span></div>
+                     <div class="notice-row"><span class="n-badge nb-blue">시스템</span><span class="n-subject">그룹웨어 정기 점검 안내 (금주 토)</span><span class="n-date">12.01</span></div>
+                     <div class="notice-row"><span class="n-badge nb-gray">인사</span><span class="n-subject">12월 신규 입사자 소개 및 OJT 일정</span><span class="n-date">11.28</span></div>
+                     <div class="notice-row"><span class="n-badge nb-green">동호회</span><span class="n-subject">사내 러닝클럽 연말 챌린지 참여자 모집</span><span class="n-date">12.07</span></div>
+                     <div class="notice-row"><span class="n-badge nb-gray">복지</span><span class="n-subject">연말 복지포인트 사용 마감 및 정산 안내</span><span class="n-date">12.05</span></div>
+                     <div class="notice-row"><span class="n-badge nb-gray">복지</span><span class="n-subject">건강검진 미수검자 검진 안내 (~12/31)</span><span class="n-date">11.25</span></div>
+                </div>
+
+                <div id="tab-event" class="notice-list">
+                     <div class="notice-row"><span class="n-badge nb-gray">경조</span><span class="n-subject">[부고] 경영지원팀 박OO 대리 빙부상</span><span class="n-date">12.12</span></div>
+                     <div class="notice-row"><span class="n-badge nb-green">동호회</span><span class="n-subject">25시즌 사내 풋살 동호회 신규 회원 모집</span><span class="n-date">11.30</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-right">
+            <div class="card unified-profile-card">
+              <div class="profile-cover"></div>
+
+              <div class="profile-content">
+                <div class="avatar-ring">
+                  <img src="{{ url_for('static', filename='img/jaehyun.jpg') }}" class="avatar-img" alt="재현 프로필">
+                </div>
+
+                <div class="user-greeting">Hello, 재현! 👋</div>
+                <div class="user-team">개발팀 · 사원</div>
+                <div class="user-role">AI Personal Assistant</div>
+
+                <!-- ✅ 말풍선/요약 제거하고, 기존 action-row 스타일 그대로 버튼만 배치 -->
+                <div class="action-row">
+                  <button class="action-btn" type="button">
+                    <div class="action-num">IN</div>
+                    <div class="action-label">출근</div>
+                  </button>
+
+                  <button class="action-btn" type="button">
+                    <div class="action-num">OUT</div>
+                    <div class="action-label">퇴근</div>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+
+            <div class="card">
+              <div class="card-title">
+                TO DO LIST
+              </div>
+              <!-- ✅ 여기 안에 localStorage To-do가 자동 렌더됨 -->
+              <div id="dashboard-todo-list"></div>
+            </div>
+
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; margin-bottom:15px; font-weight:bold; font-size:15px;">2025년 12월 <span style="font-size:12px; color:#999;">< ></span></div>
+                <div class="cal-grid">
+                    <div class="cal-head" style="color:#F04452">일</div><div class="cal-head">월</div><div class="cal-head">화</div><div class="cal-head">수</div><div class="cal-head">목</div><div class="cal-head">금</div><div class="cal-head">토</div>
+                    <div style="color:#ddd;">30</div><div style="color:#ddd;">1</div><div style="color:#ddd;">2</div><div style="color:#ddd;">3</div><div style="color:#ddd;">4</div><div style="color:#ddd;">5</div><div style="color:#ddd;">6</div>
+                    <div>7</div><div>8</div><div>9</div><div>10</div><div>11</div><div>12</div><div>13</div>
+                    <div>14</div><div>15</div><div>16</div><div>17</div><div>18</div><div class="cal-day active">19</div><div>20</div>
+                    <div>21</div><div>22</div><div>23</div><div>24</div><div style="color:#F04452;">25</div><div>26</div><div>27</div>
+                    <div>28</div><div>29</div><div>30</div><div>31</div><div style="color:#ddd;">1</div><div style="color:#ddd;">2</div>
+                </div>
+                <div style="margin-top:15px; border-top:1px solid #f9f9f9; padding-top:10px; font-size:12px; color:#555;">
+                    <span style="color:#4A90E2;">●</span> 14:00 주간 개발 회의
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // Accordion
+    function toggleMail(el) { el.classList.toggle('active'); }
+
+    // Notice Tabs
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.notice-list').forEach(list => list.classList.remove('active'));
+        event.target.classList.add('active');
+        document.getElementById('tab-' + tabId).classList.add('active');
+    }
+
+    // Mail Filter Logic
+    function filterMail(category, btnElement) {
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        btnElement.classList.add('active');
+
+        const mails = document.querySelectorAll('.mail-item');
+        mails.forEach(mail => {
+            if (category === 'all') {
+                mail.classList.remove('hidden');
+            } else if (category === 'urgent') {
+                if (mail.dataset.category === 'urgent') mail.classList.remove('hidden');
+                else mail.classList.add('hidden');
+            } else if (category === 'general') {
+                if (mail.dataset.category === 'general') mail.classList.remove('hidden');
+                else mail.classList.add('hidden');
+            }
+        });
+    }
+    const TODO_KEY = "SANAI_DASHBOARD_TODOS";
+    function loadTodos() {
+    try { return JSON.parse(localStorage.getItem(TODO_KEY) || "[]"); }
+    catch { return []; }
+    }
+    function saveTodos(list) {
+    localStorage.setItem(TODO_KEY, JSON.stringify(list));
+    }
+
+    function renderTodos() {
+    const box = document.getElementById("dashboard-todo-list");
+    if (!box) return;
+
+    const todos = loadTodos();
+
+    if (todos.length === 0) {
+      box.innerHTML = `<div style="opacity:.6; padding:8px 0;">추가된 To-do가 없습니다.</div>`;
+      return;
+    }
+
+    box.innerHTML = todos.map(t => `
+      <div class="todo-item" data-id="${t.id}"
+           style="display:flex; align-items:center; gap:10px; padding:8px 0; cursor:pointer;"
+           onclick="toggleTodo('${t.id}')">
+        <div class="chk-box ${t.is_done ? "done" : ""}"
+             style="width:16px; height:16px; border:1px solid #bbb; border-radius:4px;"></div>
+
+        <div class="todo-title ${t.is_done ? "done" : ""}" style="flex:1; ${t.is_done ? "text-decoration:line-through; opacity:.6;" : ""}">
+          ${escapeHTML(t.text)}
+        </div>
+
+        <button type="button" onclick="event.stopPropagation(); removeTodo('${t.id}')"
+                style="border:0; background:transparent; cursor:pointer; opacity:.6;">
+          <i class="fa-solid fa-trash"></i>
+        </button>
+      </div>
+    `).join("");
+    }
+
+    function toggleTodo(id) {
+    const todos = loadTodos();
+    const t = todos.find(x => x.id === id);
+    if (!t) return;
+    t.is_done = !t.is_done;
+    saveTodos(todos);
+    renderTodos();
+    }
+
+    function removeTodo(id) {
+    const todos = loadTodos().filter(x => x.id !== id);
+    saveTodos(todos);
+    renderTodos();
+    }
+
+    function escapeHTML(s) {
+    return (s || "").replace(/[&<>'"]/g, c => ({
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;'
+    }[c]));
+    }
+
+    // ✅ 페이지 로드시 렌더
+    document.addEventListener("DOMContentLoaded", renderTodos);
+
+    // ✅ 다른 탭에서 추가되면 자동 반영
+    window.addEventListener("storage", (e) => {
+    if (e.key === TODO_KEY) renderTodos();
+    });
+</script>
+{% endblock %}
