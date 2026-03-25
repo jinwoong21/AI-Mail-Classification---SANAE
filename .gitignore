@@ -1,0 +1,56 @@
+# 무시할 파일
+/*
+
+**/.venv/
+**/.ipynb_checkpoints/
+**/__pycache__/
+
+**/jupyter/*.keras
+**/jupyter/*.model
+**/jupyter/*.h5
+**/jupyter/*.pkl
+
+**/saved_models/ml/
+
+**/.env
+**/*.log
+
+# 추적할 파일
+!/config/
+!/data/
+!/flask_web/
+!/info/
+!/ingestion/
+!/jupyter/
+!/pt/
+!/saved_models/
+!/spark_job/
+!/test/
+!/.env.example
+
+# 이 파일들은 항상 추적
+!.gitignore
+!.gitmessage.txt
+
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# IDE config
+.idea/
+
+# Security & API Keys
+*api_key.txt
+*.key
+.env
+
+# Large Models & Weights (구글 드라이브 링크 제공 권장)
+*.h5
+*.hdf5
+*.pkl
+*.onnx
+
+# Large Datasets
+*.csv
+# (만약 샘플용 작은 csv를 올리고 싶다면 위 *.csv 밑에 '!sample.csv' 처럼 예외처리 하시면 됩니다.)
