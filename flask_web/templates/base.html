@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SANAE AI Platform{% endblock %}</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+    <style>
+      /* ✅ 브라우저 기본 여백(주황색 margin) 제거 */
+      html, body {
+        margin: 0;
+        padding: 0;
+      }
+
+      /* ✅ 레이아웃이 좌측 사이드바 + 우측 메인이라면 flex 기반으로 통일 */
+      .main-wrapper {
+        display: flex;
+        min-height: 100vh;
+        box-sizing: border-box;
+      }
+
+      /* ✅ header가 main-wrapper 안에서 위에 있고 main이 아래라면,
+         main-wrapper 내부가 column일 수도 있어서 min-width 0 세팅 */
+      .main-wrapper > * {
+        min-width: 0;
+      }
+
+      /* ✅ 핵심: main.content의 바깥 여백(margin) 제거 */
+      main.content {
+        margin: 0 !important;
+        flex: 1;
+        min-width: 0;
+        box-sizing: border-box;
+      }
+    </style>
+
+
+</head>
+<body>
+
+    {% include 'includes/sidebar.html' %}
+
+    <div class="main-wrapper">
+
+        {% include 'includes/header.html' %}
+
+        <main class="content">
+            {% block content %}
+            {% endblock %}
+        </main>
+
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // 1. 현재 브라우저의 주소창 경로를 가져옴 (예: /mail_inbox)
+            const currentPath = window.location.pathname;
+
+            // 2. 사이드바의 아이콘 링크들을 모두 가져옴
+            const sidebarLinks = document.querySelectorAll('.sidebar-icon');
+
+            sidebarLinks.forEach(link => {
+                // 링크의 목표 주소 (href)를 가져옴
+                const linkPath = link.getAttribute('href');
+
+                // 3. 현재 주소가 링크 주소를 포함하고 있으면 'active' 클래스 추가
+                // (단, 링크가 '#'이거나 비어있으면 무시)
+                if (linkPath && linkPath !== '#' && currentPath.includes(linkPath)) {
+                    link.classList.add('active');
+                }
+            });
+        });
+        (function(){
+          const btn = document.getElementById("alarm-btn");
+          const badge = document.getElementById("alarm-badge");
+          const dd = document.getElementById("alarm-dropdown");
+          const list = document.getElementById("alarm-list");
+
+          // 로그인 안 된 페이지면 요소가 없을 수 있음
+          if (!btn || !badge || !dd || !list) return;
+
+          // ✅ 드롭다운 토글
+          btn.addEventListener("click", (e)=>{
+            e.preventDefault();
+            e.stopPropagation();
+            dd.style.display = (dd.style.display === "none" || !dd.style.display) ? "block" : "none";
+          });
+          document.addEventListener("click", ()=> dd.style.display = "none");
+
+          // ✅ 브라우저 알림 권한
+          function initBrowserNoti(){
+            if (!("Notification" in window)) return;
+            if (Notification.permission === "default") {
+              Notification.requestPermission().catch(()=>{});
+            }
+          }
+
+          function pushNoti(item){
+            if (!("Notification" in window)) return;
+            if (Notification.permission !== "granted") return;
+
+            const isCritical = (item.priority == 2);
+            const title = isCritical ? "🚨 CRITICAL 메일 도착" : "⚡ 긴급 메일 도착";
+            const body = `${item.sender} · ${item.subject}`;
+
+            const n = new Notification(title, { body });
+            n.onclick = () => {
+              window.focus();
+              window.location.href = `/mail_detail/${item.id}`;
+            };
+          }
+
+          // ✅ 중복 알림 방지
+          let notifiedSet = new Set(JSON.parse(localStorage.getItem("notifiedUrgentIds") || "[]"));
+          let bootstrapped = false;
+
+
+          async function refreshUrgent(){
+            try{
+              const res = await fetch("/api/urgent_status");
+              if (!res.ok) return;
+              const data = await res.json();
+              if (data.status !== "success") return;
+
+              const cnt = Number(data.count || 0);
+              if (cnt > 0){
+                badge.style.display = "flex";
+                badge.textContent = String(cnt);
+              } else {
+                badge.style.display = "none";
+              }
+
+              const items = data.items || [];
+              if (items.length === 0){
+                list.innerHTML = `<div style="padding:16px 12px; font-size:12px; color:#888;">긴급 메일 없음</div>`;
+              } else {
+                list.innerHTML = items.map(it=>{
+                  const priText = (it.priority >= 2) ? "CRITICAL" : "URGENT";
+                  const priStyle = (it.priority >= 2)
+                    ? "background:#fff1f0;color:#cf1322;border:1px solid #ffa39e;"
+                    : "background:#fff7e6;color:#d46b08;border:1px solid #ffd591;";
+                  return `
+                    <div style="padding:10px 12px; border-bottom:1px solid #f1f3f5; cursor:pointer;"
+                         onclick="location.href='/mail_detail/${it.id}'">
+                      <div style="display:flex; justify-content:space-between; gap:10px;">
+                        <div style="font-size:12px; font-weight:700; color:#333;">${it.sender || 'Unknown'}</div>
+                        <div style="font-size:11px; font-weight:800; padding:2px 6px; border-radius:6px; ${priStyle}">
+                          ${priText}
+                        </div>
+                      </div>
+                      <div style="margin-top:4px; font-size:12px; color:#555; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                        ${it.subject || ''}
+                      </div>
+                    </div>
+                  `;
+                }).join("");
+              }
+
+              // 새로 온 것만 브라우저 알림
+              // ✅ 첫 실행: 기존 긴급메일은 "이미 본 것"으로 등록만(알림 X)
+              // ✅ 두번째 실행부터: 진짜 새로 들어온 것만 알림
+              if (!bootstrapped) {
+                for (const it of items) notifiedSet.add(String(it.id));
+                localStorage.setItem("notifiedUrgentIds", JSON.stringify([...notifiedSet]));
+                bootstrapped = true;
+              } else {
+                for (const it of items){
+                  const key = String(it.id);
+                  if (!notifiedSet.has(key)){
+                    pushNoti(it);
+                    notifiedSet.add(key);
+                  }
+                }
+                localStorage.setItem("notifiedUrgentIds", JSON.stringify([...notifiedSet]));
+              }
+
+
+
+            } catch(e){
+              console.error("[URGENT] refresh failed:", e);
+            }
+          }
+
+          initBrowserNoti();
+          refreshUrgent();
+          setInterval(refreshUrgent, 5000); // 5초 폴링
+        })();
+        // base.html의 공통 스크립트
+        async function handleSearch(query) {
+            const resultsEl = document.getElementById('searchResults');
+
+            if (query.trim().length < 2) {
+                resultsEl.style.display = 'none';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/search_mails?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+
+                if (data.status === 'success' && data.mails.length > 0) {
+                    resultsEl.innerHTML = data.mails.map(mail => `
+                        <div class="search-item" onclick="location.href='/mail_detail/${mail.id}'">
+                            <span class="subject">${mail.subject}</span>
+                            <span class="sender">${mail.sender_name} | ${mail.received_at}</span>
+                        </div>
+                    `).join('');
+                    resultsEl.style.display = 'block';
+                } else {
+                    resultsEl.innerHTML = '<div style="padding:15px; color:#999; font-size:12px;">검색 결과가 없습니다.</div>';
+                    resultsEl.style.display = 'block';
+                }
+            } catch (error) {
+                console.error("Search Error:", error);
+            }
+        }
+
+        // 창 바깥 클릭 시 닫기 (공통 적용)
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-container')) {
+                document.getElementById('searchResults').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

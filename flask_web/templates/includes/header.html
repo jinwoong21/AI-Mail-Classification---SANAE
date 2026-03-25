@@ -1,0 +1,143 @@
+<header class="header"
+        style="display: flex; justify-content: space-between; align-items: center;
+               padding: 10px 20px; border-bottom: 1px solid #EAEAEA;">
+
+    <!-- 로고 -->
+    <div class="logo-area"
+         style="font-size: 24px; font-weight: 700; color: #333;
+                display: flex; align-items: center;">
+        SANAE
+    </div>
+
+    <!-- 오른쪽 영역 -->
+    <div class="header-right"
+         style="display: flex; align-items: center; gap: 16px;">
+
+        <!-- 검색 -->
+        <div class="search-box" style="position: relative;">
+            <input type="text"
+                   placeholder="AI에게 메일 내용을 물어보세요..."
+                   style="padding: 8px 15px 8px 40px;
+                          border: 1px solid #DDD;
+                          border-radius: 20px;
+                          width: 280px;
+                          font-size: 14px;
+                          outline: none;">
+
+            <i class="fa-solid fa-magnifying-glass"
+               style="position: absolute; left: 15px; top: 50%;
+                      transform: translateY(-50%);
+                      color: #888;"></i>
+        </div>
+
+        <!-- 알림 + 인증 영역 -->
+        <div class="header-actions"
+             style="display: flex; align-items: center; gap: 10px;">
+
+            <!-- 알림 -->
+            <div class="header-icons" style="position:relative;">
+              {% if session.get('user') %}
+
+              <!-- ✅ 알림 버튼 + 배지 -->
+              <button id="alarm-btn"
+                      style="border:0; background:transparent; cursor:pointer; position:relative; padding:4px;">
+                <i class="fa-regular fa-bell" style="font-size: 20px; color: #555;"></i>
+
+                <span id="alarm-badge"
+                      style="display:none; position:absolute; top:-2px; right:-2px;
+                             min-width:16px; height:16px; padding:0 4px;
+                             border-radius:999px; background:#ff4d4f; color:#fff;
+                             font-size:10px; font-weight:800;
+                             align-items:center; justify-content:center;">
+                  0
+                </span>
+              </button>
+
+              <!-- ✅ 드롭다운 (이거 없으면 JS가 return 해서 버튼이 죽음) -->
+              <div id="alarm-dropdown"
+                   style="display:none; position:absolute; right:0; top:34px; width:320px;
+                          background:#fff; border:1px solid #e9ecef; border-radius:10px;
+                          box-shadow:0 8px 24px rgba(0,0,0,0.08); overflow:hidden; z-index:9999;">
+                <div style="padding:10px 12px; font-size:12px; font-weight:800; color:#333;
+                            background:#f8f9fa; border-bottom:1px solid #eef1f4;">
+                  긴급 알림
+                </div>
+                <div id="alarm-list" style="max-height:280px; overflow:auto;">
+                  <div style="padding:16px 12px; font-size:12px; color:#888;">긴급 메일 없음</div>
+                </div>
+              </div>
+
+
+              {% else %}
+              <i class="fa-regular fa-bell"
+                 style="font-size: 20px; color: #AAA; cursor: default;"
+                 title="로그인 후 알람을 확인하세요"></i>
+              {% endif %}
+            </div>
+
+
+            {% if session.get('user') %}
+            <!-- 로그인 상태 -->
+            <div class="user-area"
+                 style="display: flex; align-items: center; gap: 10px;">
+
+                <div class="profile-img-sm"
+                     title="{{ session.get('user').name }}님의 프로필"
+                     style="width: 36px; height: 36px;
+                            border-radius: 50%;
+                            background-color: #f0f0f0;
+                            background-size: cover;
+                            background-position: center;
+                            border: 1px solid #E1E1E1;
+                            cursor: pointer;
+                            background-image: url('{{ session.get('user').profile_img_url or url_for('static', filename='img/default-profile.png') }}');">
+                </div>
+
+                <a href="/logout"
+                   style="padding: 6px 12px;
+                          background: #F0F0F0;
+                          color: #555;
+                          border-radius: 4px;
+                          font-size: 13px;
+                          font-weight: 500;
+                          text-decoration: none;">
+                    로그아웃
+                </a>
+            </div>
+            {% else %}
+            <!-- 비로그인 -->
+            <div class="auth-buttons"
+                 style="display: flex; gap: 6px; align-items: center;">
+
+                <a href="/login"
+                   style="padding: 6px 12px;
+                          border: 1px solid #000;
+                          background: #fff;
+                          color: #000;
+                          border-radius: 4px;
+                          font-size: 13px;
+                          font-weight: 600;
+                          text-decoration: none;">
+                    로그인
+                </a>
+
+                <a href="/register"
+                   style="padding: 6px 12px;
+                        background: #2563EB;
+                        color: #fff;
+                        border: 1px solid #2563EB;
+                        border-radius: 4px;
+                        font-size: 13px;
+                        font-weight: 600;
+                        text-decoration: none;
+                        transition: background 0.2s;"
+                onmouseover="this.style.background='#1E40AF'"
+                onmouseout="this.style.background='#2563EB'">
+                    회원가입
+                </a>
+
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</header>

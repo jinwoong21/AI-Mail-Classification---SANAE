@@ -1,0 +1,128 @@
+<style>
+    /* =========================================
+       1. [핵심] 메인 페이지 겹침 해결 코드 (추가됨)
+       ========================================= */
+    /* 사이드바가 80px 공간을 차지하므로, 메인 내용은 80px 밀어줍니다 */
+    .main-wrapper,
+    main.content,
+    .container-fluid {
+        margin-left: 80px !important;
+        width: calc(100% - 80px) !important;
+    }
+
+    /* =========================================
+       2. 사이드바 디자인 
+       ========================================= */
+    nav.sidebar {
+        width: 80px !important;
+        min-width: 80px !important;
+        background-color: #ffffff !important;
+        border-right: 1px solid #e0e0e0;
+        height: 100vh;
+        position: fixed;
+        left: 0;
+        top: 0;
+        padding-top: 10px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        z-index: 9999;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    a.sidebar-icon {
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+
+        width: 100% !important;
+        height: auto !important;
+        padding: 15px 5px !important; /* 내부 간격 살짝 조정 */
+        margin: 0 !important;
+
+        color: #555 !important;
+        text-decoration: none !important;
+        transition: all 0.2s ease;
+    }
+
+    a.sidebar-icon i {
+        width: auto !important;
+        font-size: 1.4rem !important;
+        margin-right: 0 !important;
+        margin-bottom: 8px !important; /* 아이콘-글자 간격 확보 */
+        text-align: center !important;
+        color: #444;
+        display: block !important;
+    }
+
+    a.sidebar-icon span {
+        font-size: 0.75rem !important; /* 글자 크기 미세 조정 */
+        font-weight: 500 !important;
+        text-align: center !important;
+        display: block !important;
+        white-space: nowrap !important; /* 한 줄로 나오게 (원하면 normal로 변경) */
+        line-height: 1.2 !important;
+        color: #666;
+    }
+
+    /* 마우스 올렸을 때 */
+    a.sidebar-icon:hover {
+        background-color: #f8f9fa !important;
+    }
+    a.sidebar-icon:hover i, a.sidebar-icon:hover span {
+        color: #000 !important;
+    }
+
+    /* 활성화 상태 */
+    a.sidebar-icon.active {
+        background-color: transparent !important;
+    }
+    a.sidebar-icon.active i {
+        color: #1565c0 !important;
+    }
+    a.sidebar-icon.active span {
+        color: #1565c0 !important;
+        font-weight: 700 !important;
+    }
+
+    /* 구분선 */
+    hr.sidebar-divider {
+        width: 50%;
+        margin: 15px auto !important;
+        border: 0;
+        border-top: 1px solid #ddd !important;
+    }
+</style>
+
+<nav class="sidebar">
+    <div style="padding-bottom:10px;"></div>
+
+    <a href="/main" class="sidebar-icon">
+        <i class="fa-solid fa-house"></i>
+        <span>홈</span>
+    </a>
+
+    <hr class="sidebar-divider">
+
+    <a href="/mail_inbox" class="sidebar-icon">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+        <span>AI 메일</span>
+    </a>
+
+    <a href="#" class="sidebar-icon" onclick="alert('준비 중입니다.')">
+        <i class="fa-regular fa-calendar-check"></i>
+        <span>캘린더</span>
+    </a>
+
+    <hr class="sidebar-divider">
+
+    <a href="#" class="sidebar-icon">
+        <i class="fa-solid fa-gear"></i>
+        <span>설정</span>
+    </a>
+    <a href="#" class="sidebar-icon">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        <span>로그아웃</span>
+    </a>
+</nav>
