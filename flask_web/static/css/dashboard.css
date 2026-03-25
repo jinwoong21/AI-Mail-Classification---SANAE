@@ -1,0 +1,1384 @@
+/* static/css/dashboard.css */
+
+:root {
+    --bg-color: #F8F9FA;
+    --text-primary: #333;
+    --text-secondary: #666;
+    --border-color: #E1E1E1;
+    --blue-highlight: #00A1E9;
+    --red-badge: #FF4D4F;
+    --sidebar-width: 60px;
+    --header-height: 60px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Noto Sans KR', sans-serif; }
+
+body { background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; }
+
+/* --- Sidebar --- */
+.sidebar {
+    width: var(--sidebar-width);
+    background: #fff;
+    border-right: 1px solid var(--border-color);
+    display: flex; flex-direction: column; align-items: center;
+    padding-top: 15px; z-index: 100;
+}
+.grid-icon { font-size: 18px; color: #555; margin-bottom: 20px; cursor: pointer; }
+.sidebar-icon {
+    width: 40px; height: 40px; margin-bottom: 15px;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    color: #333; text-decoration: none; border-radius: 8px; position: relative;
+    cursor: pointer; transition: 0.2s;
+}
+.sidebar-icon:hover { background-color: #F0F2F5; }
+.sidebar-icon.active { color: var(--blue-highlight); background-color: #EEF2FF; }
+.sidebar-icon i { font-size: 20px; margin-bottom: 4px; }
+.sidebar-icon span { font-size: 10px; font-weight: 500; }
+.badge {
+    position: absolute; top: 0; right: 0;
+    background: var(--red-badge); color: white;
+    font-size: 10px; font-weight: bold;
+    width: 16px; height: 16px; border-radius: 50%;
+    display: flex; justify-content: center; align-items: center;
+}
+
+/* --- Header --- */
+.main-wrapper { flex: 1; display: flex; flex-direction: column; }
+
+.header {
+    height: var(--header-height); background: #fff; border-bottom: 1px solid var(--border-color);
+    display: flex; align-items: center; justify-content: space-between; padding: 0 25px;
+}
+.logo-area { display: flex; align-items: center; gap: 5px; font-size: 18px; font-weight: 700; color: #333; cursor: pointer; }
+.logo-area i { font-size: 14px; color: #aaa; margin-top: 2px; }
+
+.header-right { display: flex; align-items: center; gap: 15px; }
+
+.search-box { position: relative; width: 300px; }
+.search-box input {
+    width: 100%; padding: 8px 15px 8px 35px; border-radius: 4px; border: 1px solid #ddd;
+    background: #fff; font-size: 14px; outline: none;
+}
+.search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #aaa; }
+
+.header-icons i { font-size: 18px; color: #555; margin-left: 15px; cursor: pointer; }
+.header-icons i:hover { color: #000; }
+
+.portal-btn {
+    background: #333; color: #fff; padding: 6px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 5px; cursor: pointer;
+}
+.profile-img-sm {
+    width: 32px; height: 32px; border-radius: 50%; background: #ddd;
+    background-image: url('https://randomuser.me/api/portraits/women/44.jpg');
+    background-size: cover; cursor: pointer;
+}
+
+/* --- Dashboard Content --- */
+.content { flex: 1; padding: 25px 30px; overflow-y: auto;  }
+
+.page-title { display: flex; gap: 15px; margin-bottom: 20px; align-items: baseline; }
+.page-title h2 { font-size: 18px; font-weight: 700; color: #333; }
+.page-title span { font-size: 18px; color: #aaa; font-weight: 400; cursor: pointer; }
+
+/* Grid Layout */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 320px 1fr 300px;
+    gap: 20px;
+    max-width: 1600px;
+}
+
+/* Card Styles */
+.card { background: #fff; border: 1px solid #E1E1E1; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.card-title { font-size: 16px; font-weight: 700; color: #333; }
+.card-date { font-size: 12px; color: #888; margin-top: 5px; }
+
+/* [Left] Time/Workload */
+.attendance-box { text-align: center; }
+.time-display {
+    display: flex; justify-content: space-between; align-items: center;
+    background: #F9FAFB; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px;
+}
+.time-item { text-align: center; }
+.time-label { font-size: 12px; color: #999; margin-bottom: 4px; }
+.time-val { font-size: 18px; font-weight: 700; color: #333; }
+.arrow { color: #ddd; font-size: 18px; }
+
+.progress-area { text-align: left; margin-bottom: 20px; }
+.prog-text { font-size: 13px; color: #333; margin-bottom: 5px; }
+.prog-text strong { color: #00C73C; }
+.prog-sub { font-size: 12px; color: #aaa; margin-bottom: 8px; }
+
+.progress-bar { height: 8px; background: #eee; border-radius: 4px; overflow: hidden; position: relative; }
+.progress-fill { width: 70%; height: 100%; background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%); border-radius: 4px; }
+.progress-scale { display: flex; justify-content: space-between; font-size: 10px; color: #ccc; margin-top: 4px; }
+
+.work-details { font-size: 13px; color: #555; margin-bottom: 20px; }
+.detail-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.detail-val { font-weight: 500; }
+
+.btn-group { display: flex; gap: 10px; margin-bottom: 10px; }
+.btn-outline { flex: 1; padding: 10px; border: 1px solid #ddd; background: #fff; border-radius: 4px; cursor: pointer; font-size: 14px; color: #555; }
+.btn-outline:hover { background: #f5f5f5; }
+
+.status-change {
+    width: 100%; padding: 10px; border: 1px solid #28a745; background: #fff; color: #28a745;
+    border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; display: flex; justify-content: center; align-items: center; gap: 5px;
+}
+
+/* [Center] Board/Inbox */
+.board-tabs { display: flex; gap: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
+.tab { font-size: 14px; color: #888; cursor: pointer; font-weight: 500; }
+.tab.active { color: #333; font-weight: 700; border-bottom: 2px solid #333; padding-bottom: 9px; }
+
+.post-list { list-style: none; }
+.post-item { display: flex; gap: 15px; padding: 12px 0; border-bottom: 1px solid #f5f5f5; align-items: flex-start; cursor: pointer; }
+.post-item:hover { background-color: #FAFAFA; }
+.post-thumb {
+    width: 100px; height: 60px; background: #eee; border-radius: 4px; flex-shrink: 0;
+    background-size: cover; background-position: center;
+}
+.post-content { flex: 1; }
+.post-cate { font-size: 12px; color: #666; font-weight: 600; margin-bottom: 4px; display: inline-block; }
+.post-title { font-size: 14px; font-weight: 500; color: #333; line-height: 1.4; }
+.post-meta { font-size: 12px; color: #999; margin-top: 4px; }
+
+.pagination { display: flex; justify-content: center; gap: 5px; margin-top: 20px; font-size: 12px; color: #888; }
+.page-num { width: 20px; height: 20px; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+.page-num.active { border: 1px solid #ddd; font-weight: bold; color: #333; border-radius: 2px; }
+
+/* [Right] Profile & Calendar */
+.profile-box { text-align: center; padding-top: 10px; }
+.profile-lg {
+    width: 70px; height: 70px; border-radius: 50%; margin: 0 auto 15px; background: #eee;
+    background-image: url('https://randomuser.me/api/portraits/women/44.jpg');
+    background-size: cover; position: relative;
+}
+.status-dot { width: 12px; height: 12px; background: #00C73C; border: 2px solid #fff; border-radius: 50%; position: absolute; bottom: 0; right: 0; }
+
+.user-name { font-size: 16px; font-weight: 700; margin-bottom: 5px; }
+.user-dept { font-size: 12px; color: #888; margin-bottom: 20px; }
+
+.user-stats { display: flex; justify-content: center; gap: 40px; margin-bottom: 25px; }
+.stat-box { text-align: center; }
+.stat-num { font-size: 20px; font-weight: 700; color: var(--blue-highlight); margin-bottom: 5px; }
+.stat-text { font-size: 12px; color: #888; }
+
+.menu-list { list-style: none; text-align: left; border-top: 1px solid #f5f5f5; padding-top: 10px; }
+.menu-row {
+    display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px; color: #555; cursor: pointer;
+}
+.menu-row:hover { color: var(--blue-highlight); }
+.count { color: var(--blue-highlight); font-weight: 600; }
+.count.zero { color: #ccc; font-weight: 400; }
+
+.calendar-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 10px; }
+.cal-mockup { width: 100%; height: 200px; background: #f8f9fa; border-radius: 4px; display: flex; justify-content: center; align-items: center; color: #ccc; }
+
+/* --- static/css/dashboard.css 맨 아래에 추가 --- */
+
+/* 로그인/회원가입 버튼 그룹 */
+.auth-buttons {
+    display: flex;
+    gap: 8px;
+    margin-left: 15px;
+    align-items: center;
+}
+
+.btn-auth {
+    text-decoration: none;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: inline-block;
+}
+
+/* 로그인 버튼 (흰색 배경) */
+.btn-login {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    color: #555;
+}
+.btn-login:hover {
+    background-color: #f8f9fa;
+    border-color: #ccc;
+    color: #333;
+}
+
+/* 회원가입 버튼 (파란색 배경) */
+.btn-register {
+    background-color: var(--blue-highlight); /* #00A1E9 */
+    border: 1px solid var(--blue-highlight);
+
+    /* [수정 1] 글자색을 흰색으로 변경해야 파란 배경 위에서 보입니다! */
+    color: #fff;
+}
+
+.btn-register:hover {
+    /* [수정 2] 마우스 올렸을 때 약간 어둡게 처리 (반응감) */
+    background-color: #008AC4;
+    border-color: #008AC4;
+    opacity: 1; /* 투명도보다는 색상을 진하게 하는 게 더 깔끔합니다 */
+}
+
+/* 로그인 상태일 때 보여줄 사용자 영역 */
+.user-area {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+/* --- static/css/dashboard.css 맨 아래에 추가 --- */
+
+/* =========================================
+   [Page] 메일함 (Inbox) 스타일
+   ========================================= */
+
+/* 메일함 헤더 영역 */
+.inbox-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+}
+.inbox-title { font-size: 20px; font-weight: 700; color: #333; display: flex; align-items: center; gap: 10px; }
+
+/* 필터 탭 */
+.filter-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+.filter-btn {
+    padding: 8px 16px; border-radius: 20px; background: #fff; border: 1px solid #ddd;
+    font-size: 13px; color: #555; cursor: pointer; transition: 0.2s;
+}
+.filter-btn.active { background: var(--blue-highlight); color: white; border-color: var(--blue-highlight); font-weight: 600; }
+.filter-btn:hover:not(.active) { background: #f3f4f6; }
+
+/* 메일 리스트 컨테이너 */
+.mail-container {
+    background: #fff; border: 1px solid #E1E1E1; border-radius: 8px; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02); min-height: 600px;
+}
+
+/* 메일 헤더 (컬럼명) */
+.mail-list-header {
+    display: grid; grid-template-columns: 60px 1fr 120px 150px;
+    padding: 15px 20px; background: #F9FAFB; border-bottom: 1px solid #eee;
+    font-size: 12px; color: #888; font-weight: 600;
+}
+
+/* 메일 아이템 (행) */
+.mail-row {
+    display: grid; grid-template-columns: 60px 1fr 120px 150px;
+    padding: 15px 20px; border-bottom: 1px solid #f5f5f5;
+    align-items: center; cursor: pointer; transition: 0.1s;
+    position: relative;
+}
+.mail-row:hover { background-color: #F8F9FF; }
+
+/* 읽지 않은 메일 강조 */
+.mail-row.unread .mail-subject { font-weight: 700; color: #000; }
+.mail-row.unread { background-color: #fff; }
+.mail-row:not(.unread) { background-color: #FAFAFA; } /* 읽은 메일은 약간 회색 */
+
+/* 왼쪽 긴급도 컬러바 */
+.priority-indicator {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+}
+.p-urgent { background-color: #EF4444; } /* 매우 긴급 (빨강) */
+.p-high { background-color: #F59E0B; }   /* 긴급 (주황) */
+.p-normal { background-color: #10B981; } /* 일반 (초록) */
+
+/* 메일 내용 스타일 */
+.mail-content-area { display: flex; flex-direction: column; gap: 4px; }
+.mail-meta-top { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.sender-name { color: #333; font-weight: 600; }
+
+.mail-subject { font-size: 15px; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mail-preview { font-size: 13px; color: #888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 600px; }
+
+/* 뱃지 스타일 */
+.badge-ai { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; }
+.badge-dept { background: #EEF2FF; color: var(--blue-highlight); }
+.badge-complaint {
+    background: #F5F3FF;   /* 매우 연한 보라 바탕 */
+    color: #7C3AED;        /* 선명한 보라색 글자 */
+    border: 1px solid #DDD6FE; /* 중간 톤 보라 테두리 */
+}
+.badge-assignee { background: #F3F4F6; color: #555; }
+
+/* 우측 날짜 및 아이콘 */
+.mail-date { font-size: 12px; color: #999; text-align: right; }
+
+/* =========================================
+   [NEW] 전문적인 메일함 디자인 (SaaS Style)
+   ========================================= */
+
+/* 메일 리스트 헤더 고도화 */
+.mail-list-header {
+    display: flex; /* grid 대신 flex 사용 */
+    align-items: center;
+    padding: 10px 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    font-size: 12px; font-weight: 600; color: #6c757d;
+}
+
+/* 메일 아이템 행 (Row) */
+.mail-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    border-bottom: 1px solid #f1f3f5;
+    background: #fff;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    position: relative; /* 호버 액션 위치 잡기 위해 */
+}
+
+.mail-item:hover {
+    background-color: #f8f9fa; /* 호버 시 아주 연한 회색 */
+    box-shadow: inset 2px 0 0 var(--blue-highlight); /* 왼쪽에 파란 띠 */
+}
+
+/* 읽지 않은 메일 스타일 */
+.mail-item.unread {
+    background-color: #fff;
+}
+.mail-item.unread .subject-text {
+    font-weight: 700; color: #212529;
+}
+
+/* 1. 체크박스 & 별표 영역 */
+.col-check {
+    width: 40px;
+    display: flex; align-items: center; gap: 8px;
+    flex-shrink: 0;
+}
+.star-icon {
+    font-size: 14px; color: #adb5bd; cursor: pointer;
+}
+.star-icon.active {
+    color: #fcc419; /* 노란색 */
+}
+
+/* 2. 아바타 (Avatar) */
+.col-avatar {
+    width: 50px; flex-shrink: 0;
+}
+.avatar-circle {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    color: #495057;
+    font-size: 12px; font-weight: 700;
+    display: flex; justify-content: center; align-items: center;
+    text-transform: uppercase;
+}
+/* 아바타 색상 랜덤 효과용 (HTML에서 클래스 지정) */
+.bg-soft-blue { background: #e7f5ff; color: #1c7ed6; }
+.bg-soft-red { background: #fff5f5; color: #fa5252; }
+.bg-soft-green { background: #ebfbee; color: #2b8a3e; }
+.bg-soft-orange { background: #fff9db; color: #f08c00; }
+
+/* 3. 메일 내용 (Content) */
+.col-content {
+    flex: 1; min-width: 0; /* flex 내부 말줄임표 필수 */
+    padding-right: 20px;
+}
+.sender-row {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 2px;
+}
+.sender-name { font-size: 13px; font-weight: 600; color: #343a40; }
+
+.subject-row {
+    display: flex; align-items: center; gap: 6px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.subject-text { font-size: 14px; color: #495057; }
+.preview-text { font-size: 13px; color: #868e96; font-weight: 400; }
+
+/* AI 뱃지 고도화 */
+.badge-ai-score {
+    font-size: 10px; padding: 1px 5px; background: #e3f2fd; color: #1976d2;
+    border-radius: 4px; font-weight: 600;
+}
+.summary-icon {
+    color: #7950f2; font-size: 12px; cursor: help;
+}
+
+/* 4. 날짜 및 호버 액션 */
+.col-date {
+    width: 80px; text-align: right;
+    font-size: 12px; color: #868e96;
+    flex-shrink: 0;
+}
+
+/* 호버 시 나타나는 액션 버튼들 */
+.hover-actions {
+    display: none; /* 평소엔 숨김 */
+    gap: 5px;
+    position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+    background: #f8f9fa; /* 배경색으로 날짜 덮기 */
+    padding-left: 10px;
+}
+.mail-item:hover .hover-actions {
+    display: flex; /* 호버 시 보임 */
+}
+.mail-item:hover .col-date {
+    visibility: hidden; /* 날짜 숨김 */
+}
+
+.btn-icon-action {
+    width: 32px; height: 32px;
+    border-radius: 4px; border: 1px solid #dee2e6;
+    background: white; color: #495057;
+    display: flex; justify-content: center; align-items: center;
+    cursor: pointer; transition: 0.2s;
+}
+.btn-icon-action:hover { background: #e9ecef; color: #000; }
+
+/* 5. 담당자 (우측 끝) */
+.col-assignee {
+    width: 100px; text-align: right; flex-shrink: 0;
+    margin-left: 15px;
+}
+
+/* =========================================
+   [NEW] 이메일 클라이언트 전체 레이아웃 (Structure)
+   ========================================= */
+
+/* 1. 전체 레이아웃 (좌측 메뉴 + 우측 컨텐츠) */
+.email-wrapper {
+    display: flex;
+    gap: 30px; /* 좌우 간격 */
+    height: calc(100vh - 100px); /* 헤더 제외 높이 꽉 채우기 */
+}
+
+/* 2. 좌측 사이드바 (LNB) */
+.email-sidebar {
+    width: 230px;      /* ✅ 30px 정도만 넓힘 */
+    min-width: 230px;
+    flex-shrink: 0;
+    border-right: 1px solid transparent; /* 필요 시 구분선 */
+}
+
+/* 메일 쓰기 버튼 (강조) */
+.btn-compose {
+    display: block;
+    width: 100%;
+    padding: 12px 0;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px; font-weight: 700; color: #333;
+    text-align: center;
+    margin-bottom: 25px;
+    cursor: pointer;
+    transition: 0.2s;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.btn-compose:hover {
+    background-color: #f8f9fa;
+    border-color: #ccc;
+}
+
+/* 메뉴 리스트 */
+.email-menu-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.email-menu-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 12px;
+    margin-bottom: 4px;
+    border-radius: 6px;
+    font-size: 14px; color: #555;
+    cursor: pointer;
+    text-decoration: none; /* 링크 밑줄 제거 */
+}
+.email-menu-item:hover { background-color: #f1f3f5; color: #333; }
+.email-menu-item.active {
+    background-color: #e7f5ff;
+    color: var(--blue-highlight); /* 파란색 강조 */
+    font-weight: 700;
+}
+.email-menu-item i { width: 24px; text-align: center; margin-right: 5px; }
+
+/* 뱃지 (안 읽은 메일 수) */
+.menu-badge {
+    font-size: 11px; font-weight: 700; color: #adb5bd;
+}
+.menu-badge.active { color: var(--blue-highlight); }
+
+
+/* 3. 우측 메인 컨텐츠 (Toolbar + List) */
+.email-main-area {
+    flex: 1; /* 남은 공간 다 차지 */
+    display: flex; flex-direction: column;
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    overflow: hidden; /* 내부 스크롤을 위해 */
+}
+
+/* 툴바 (Toolbar) - 삭제, 읽음, 필터 등이 있는 곳 */
+.email-toolbar {
+    height: 50px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px;
+    border-bottom: 1px solid #e9ecef;
+    background-color: #fff;
+}
+.toolbar-left { display: flex; align-items: center; gap: 15px; }
+.toolbar-right { display: flex; align-items: center; gap: 10px; }
+
+.tool-btn {
+    border: none; background: none;
+    font-size: 13px; color: #495057; cursor: pointer;
+    padding: 6px 10px; border-radius: 4px;
+    display: flex; align-items: center; gap: 6px;
+    transition: 0.2s;
+}
+.tool-btn:hover { background-color: #f1f3f5; color: #000; }
+.tool-btn i { font-size: 14px; }
+
+/* 리스트 영역 (스크롤 가능하게) */
+.email-scroll-area {
+    flex: 1;
+    overflow-y: auto; /* 내용 많으면 여기서 스크롤 */
+}
+
+/* (기존) 필터 탭 스타일 미세 조정 (툴바 안으로 넣기 위해) */
+.filter-tabs-small { display: flex; gap: 5px; }
+.filter-btn-sm {
+    padding: 4px 10px; border-radius: 12px; border: 1px solid #dee2e6;
+    background: #fff; font-size: 12px; cursor: pointer; color: #666;
+}
+.filter-btn-sm.active {
+    background: var(--blue-highlight); color: #fff; border-color: var(--blue-highlight);
+}
+
+/* =========================================
+   [UPDATE] 긴급도 시각적 강조 (Urgency Visuals)
+   ========================================= */
+
+/* 기본 메일 아이템 (왼쪽 테두리 공간 확보) */
+.mail-item {
+    border-left: 4px solid transparent; /* 기본 투명 테두리 */
+}
+
+/* 1. [매우 긴급] 스타일 (레벨 2) - 빨강 */
+.mail-item.priority-critical {
+    background-color: #fff1f0; /* 연한 붉은 배경 */
+    border-left-color: #ff4d4f; /* 진한 빨강 테두리 */
+}
+.mail-item.priority-critical:hover {
+    background-color: #ffccc7; /* 호버 시 조금 더 진하게 */
+}
+.mail-item.priority-critical .subject-text {
+    font-weight: 800; /* 제목 더 굵게 */
+    color: #cf1322;   /* 제목도 붉은 계열로 */
+}
+
+/* 2. [긴급] 스타일 (레벨 1) - 주황 */
+.mail-item.priority-high {
+    background-color: #fff7e6; /* 연한 주황 배경 */
+    border-left-color: #fa8c16; /* 진한 주황 테두리 */
+}
+.mail-item.priority-high:hover {
+    background-color: #ffe7ba;
+}
+.mail-item.priority-high .subject-text {
+    font-weight: 700;
+    color: #d46b08;
+}
+
+/* 3. [일반] 스타일 (레벨 0) - 초록/투명 */
+.mail-item.priority-normal {
+    border-left-color: transparent; /* 일반은 테두리 없음 (깔끔하게) */
+}
+/* 읽지 않은 일반 메일만 약간 강조 */
+.mail-item.priority-normal.unread {
+    border-left-color: #52c41a; /* 읽지 않았으면 초록색 살짝 */
+}
+
+
+/* 제목 앞 강조 뱃지 (Pill Shape) */
+.urgent-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px; font-weight: 800;
+    margin-right: 6px;
+    line-height: 1.4;
+}
+.pill-critical {
+    background: #ff4d4f; color: #fff; box-shadow: 0 1px 2px rgba(255, 77, 79, 0.3);
+}
+.pill-high {
+    background: #ffa940; color: #fff;
+}
+
+/* =========================================
+   [NEW] 감정분석 & 카테고리 스타일
+   ========================================= */
+
+/* 카테고리 배지 (사내업무, 거래처 등) */
+.badge-category {
+    font-size: 11px; padding: 2px 6px; border-radius: 4px;
+    font-weight: 600; margin-right: 6px;
+    border: 1px solid transparent;
+}
+.cat-internal { /* 사내업무 */
+    background: #e6f7ff; color: #0050b3; border-color: #91caff;
+}
+.cat-client {   /* 거래처/고객 */
+    background: #f9f0ff; color: #531dab; border-color: #d3adf7;
+}
+.cat-general {  /* 일반 */
+    background: #f5f5f5; color: #595959; border-color: #d9d9d9;
+}
+
+/* 감정 분석 바 (Sentiment Bar) 컨테이너 */
+.sentiment-wrapper {
+    margin-left: 0; /* 기존 마진 제거 (독립 컬럼이라 불필요) */
+    width: 100%;    /* 컬럼 꽉 채우기 */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.sentiment-label {
+    font-size: 11px; font-weight: 600; color: #888;
+}
+.sentiment-track {
+    width: 60px; height: 6px;
+    background: #eee; border-radius: 3px;
+    overflow: hidden;
+}
+.sentiment-fill {
+    height: 100%; border-radius: 3px;
+}
+
+/* 점수에 따른 색상 (긍정-초록, 부정-빨강, 중립-회색) */
+.sentiment-pos { background: #52c41a; } /* 긍정 */
+.sentiment-neg { background: #ff4d4f; } /* 부정 */
+.sentiment-mid { background: #faad14; } /* 중립 */
+
+/* 제목 영역 레이아웃 조정 (Flex) */
+.subject-row {
+    display: flex; align-items: center;
+    /* justify-content: space-between; <-- 이 옵션은 상황에 따라 */
+}
+
+/* 2. [NEW] 분류 컬럼 (사내/거래처) */
+.col-category {
+    width: 90px;      /* 고정 너비 */
+    text-align: center;
+    flex-shrink: 0;   /* 화면 줄여도 찌그러지지 않음 */
+}
+
+/* 3. [NEW] 감정 분석 컬럼 (게이지 바) */
+.col-sentiment {
+    width: 150px;     /* 고정 너비 */
+    padding: 0 30px;
+    flex-shrink: 00;
+    display: flex;
+    align-items: center; /* 수직 중앙 */
+}
+
+/* =========================================
+   [Detail View] 메일 상세 보기 스타일
+   ========================================= */
+
+/* AI 인사이트 카드 (핵심 디자인) */
+.ai-insight-card {
+    background-color: #fff;
+    border: 1px solid #e1e4e8;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    margin-bottom: 30px;
+    overflow: hidden;
+}
+
+.insight-header {
+    background: linear-gradient(90deg, #f0f4ff 0%, #f9faff 100%);
+    padding: 10px 20px;
+    font-size: 13px; font-weight: 700; color: #00A1E9;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid #edf2f7;
+}
+
+.insight-body {
+    padding: 20px;
+}
+
+.insight-title {
+    font-size: 12px; font-weight: 700; color: #555;
+    margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+.insight-text {
+    font-size: 14px; color: #333; line-height: 1.6; margin: 0;
+}
+
+/* 메일 본문 영역 (종이 느낌) */
+.email-body-content {
+    background-color: #fff;
+    border: 1px solid #eee;
+    padding: 40px;
+    border-radius: 8px;
+    min-height: 300px;
+    font-size: 15px;
+    line-height: 1.8;
+    color: #222;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+/* =========================================
+   [Final] 메일 상세 페이지 스타일 (하늘색 테마)
+   ========================================= */
+
+/* 1. 상단 툴바 버튼 (하늘색 계열 깔끔하게) */
+.btn-tool-custom {
+    border: none; background: transparent;
+    padding: 8px 12px; border-radius: 6px;
+    font-size: 13px; font-weight: 600; color: #555;
+    display: flex; align-items: center; gap: 8px;
+    cursor: pointer; transition: all 0.2s;
+    text-decoration: none;
+}
+.btn-tool-custom:hover {
+    background-color: #e6f7ff; /* 아주 연한 하늘색 배경 */
+    color: #00A1E9; /* 브랜드 컬러 */
+}
+
+/* 특정 컬러 강조 클래스 */
+.text-blue { color: #555; }
+.text-blue:hover { color: #00A1E9; }
+
+.text-danger-soft:hover {
+    background-color: #fff1f0; color: #ff4d4f;
+}
+
+.divider-vertical {
+    width: 1px; height: 16px; background: #ddd; margin: 0 5px;
+}
+
+
+/* 2. 감정 분석 UI (자연스러운 배치) */
+.sentiment-row-container {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* 요소 간 간격 */
+    padding: 10px 0;
+}
+
+.sentiment-emoji {
+    font-size: 24px; /* 이모티콘 크기 적절하게 */
+    line-height: 1;
+}
+
+.sentiment-bar-wrapper {
+    flex: 1; /* 남은 공간 차지 */
+}
+
+.sentiment-track {
+    width: 100%; height: 8px; background: #eee; overflow: hidden;
+}
+
+.sentiment-score-text {
+    font-size: 14px; font-weight: 700; color: #333;
+    min-width: 40px; text-align: right;
+}
+
+/* --- (기타 문서 레이아웃 유지) --- */
+.email-document-container { max-width: 1000px; margin: 0 auto; padding: 10px 20px; }
+.doc-header { margin-bottom: 20px; }
+.doc-title {
+    font-size: 26px; font-weight: 700; color: #111;
+    margin-top: 12px; margin-bottom: 24px;
+    line-height: 1.3; letter-spacing: -0.5px;
+}
+.avatar-circle-lg { width: 42px; height: 42px; border-radius: 50%; background: #f1f3f5; font-size: 16px; font-weight: 700; display: flex; justify-content: center; align-items: center; color: #495057;}
+.doc-divider { border: 0; border-top: 1px solid #eee; margin: 30px 0; }
+
+.content-text { white-space: pre-wrap; }
+
+/* AI 리포트 영역 */
+.ai-report-section { background: #F9FAFB; border: 1px solid #eee; border-radius: 12px; padding: 25px; margin-top: 20px; }
+.report-header { display: flex; justify-content: space-between; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; align-items: center;}
+.report-title { font-size: 14px; font-weight: 700; color: #444; text-transform: uppercase; }
+.report-conf { font-size: 12px; color: #888; }
+.ai-dashboard-grid { display: grid; grid-template-columns: 1fr 1fr 240px; gap: 20px; }
+.ai-card { background: #fff; border: 1px solid #e1e1e1; border-radius: 8px; padding: 15px 20px; }
+.ai-card-label { font-size: 12px; font-weight: 700; color: #00A1E9; margin-bottom: 10px; display: block; }
+.summary-text { font-size: 13px; color: #444; line-height: 1.6; margin: 0; }
+.ai-todo-list { list-style: none; padding: 0; margin: 0; }
+.ai-todo-list li { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; font-size: 13px; color: #333; }
+.ai-todo-list input[type="checkbox"] { margin-top: 4px; accent-color: #00A1E9; }
+
+/* =========================================
+   [Naver Style] 메일 상세 페이지 스타일
+   ========================================= */
+
+/* 1. 상단 툴바 (네이버 스타일) */
+.btn-tool-naver {
+    border: 1px solid #d6d6d6; /* 네이버식 연한 테두리 */
+    background: #fff;
+    padding: 6px 12px;
+    border-radius: 2px; /* 살짝 각진 모서리 */
+    font-size: 13px; font-weight: 400; color: #333;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.1s;
+    text-decoration: none;
+    height: 32px; /* 높이 고정 */
+    gap: 12px;
+}
+.btn-tool-naver:hover {
+    background-color: #f9f9f9;
+    border-color: #b5b5b5;
+}
+
+.divider-vertical {
+    width: 1px; height: 16px; background: #e1e1e1; margin: 0 8px;
+}
+
+/* 2. 문서 컨테이너 & 네이버식 헤더 */
+.email-document-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px 25px;
+}
+
+.naver-doc-header { margin-bottom: 20px; }
+
+/* 제목 행 */
+.naver-subject-row {
+    display: flex; align-items: center;
+    margin-bottom: 15px;
+}
+
+.naver-subject-text {
+    font-size: 18px; font-weight: 700; color: #000;
+    line-height: 1.4;
+    margin-left: 5px;
+}
+
+/* 메타 데이터 테이블 (보낸사람, 받는사람 등) */
+.naver-meta-table {
+    font-size: 13px;
+    color: #333;
+}
+
+.naver-meta-row {
+    display: flex; align-items: center;
+    margin-bottom: 10px; /* 행 간격 */
+    line-height: 1.5;
+}
+
+.meta-label {
+    width: 70px; /* 라벨 고정 너비 */
+    color: #888;
+    font-weight: 400;
+}
+
+.meta-value {
+    flex: 1;
+    color: #333;
+}
+
+/* 보낸사람 알약 스타일 (이미지 참고) */
+.sender-pill {
+    background-color: #eaf4fc; /* 연한 하늘색 배경 */
+    color: #333;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 13px;
+    display: inline-block;
+}
+
+.text-email {
+    color: #888;
+    margin-left: 4px;
+    font-size: 13px;
+}
+
+.recipient-badge {
+    background: #f0f0f0;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #555;
+    margin-right: 4px;
+}
+
+.date-text {
+    color: #666;
+    font-family: 'Tahoma', sans-serif; /* 숫자가 깔끔해 보이는 폰트 */
+    position: relative;
+    top: 2px;
+}
+
+
+/* 구분선 */
+.doc-divider {
+    border: 0; border-top: 1px solid #e5e5e5; margin: 20px 0 30px 0;
+}
+
+/* 본문 */
+.doc-body {
+    min-height: 200px;
+    font-size: 14px; /* 본문 폰트 사이즈 네이버는 14~15px */
+    line-height: 0.5;
+    color: #333;
+
+    /* ▼ 본문을 왼쪽/위쪽으로 바짝 붙이기 */
+    padding-left: 40px !important;
+    margin-top: 0;    /* 위쪽 여백 제거 */
+    padding-top: 10px; /* 구분선과 본문 사이 최소한의 간격 */
+
+    text-align: left; /* 강제 왼쪽 정렬 */
+}
+.content-text {
+    /* 기존: white-space: pre-wrap; */
+    /* 수정: 일반적인 웹 문서처럼 공백을 무시하고 왼쪽으로 붙임 */
+    white-space: normal;
+
+    /* 혹시 글자가 겹치면 word-break 추가 */
+    word-break: break-all;
+}
+
+
+/* 3. AI 인텔리전스 리포트 (유지하되 깔끔하게) */
+.ai-report-section {
+    background: #fcfcfc;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    padding: 25px;
+    margin-top: 30px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+.report-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px; padding-bottom: 12px;
+    border-bottom: 1px solid #eee;
+}
+.report-title { font-size: 14px; font-weight: 700; color: #444; letter-spacing: 0.5px; }
+.report-conf { font-size: 12px; color: #999; }
+
+.ai-dashboard-grid {
+    display: grid; grid-template-columns: 1fr 1fr 260px; gap: 20px;
+}
+
+.ai-card {
+    background: #fff;
+    border: 1px solid #e1e1e1;
+    border-radius: 8px;
+    padding: 16px 20px;
+}
+.ai-card-label {
+    font-size: 12px; font-weight: 700; color: #00A1E9; margin-bottom: 12px; display: block;
+}
+
+/* 감정 분석 UI */
+.sentiment-row-container {
+    display: flex; align-items: center; gap: 14px; padding: 5px 0 15px 0;
+}
+.sentiment-emoji { font-size: 26px; line-height: 1; }
+.sentiment-bar-wrapper { flex: 1; }
+.sentiment-track { width: 100%; height: 8px; background: #eee; overflow: hidden; }
+.sentiment-score-text { font-size: 15px; font-weight: 700; color: #333; min-width: 40px; text-align: right; }
+
+/* 번역 버튼 */
+.btn-action-outline {
+    /* 크기 및 배치 */
+    padding: 10px 20px;
+    min-width: 180px; /* 너무 작아지지 않게 */
+
+    /* 디자인 */
+    background-color: #f0faff;
+    border: 1px solid #00A1E9;
+    border-radius: 6px; /* 부드러운 모서리 */
+
+    /* 폰트 */
+    font-size: 13px;
+    font-weight: 500;
+    color: #00A1E9;
+
+    /* 효과 */
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+.btn-action-outline:hover {
+    background-color: #00A1E9; /* 배경이 브랜드 컬러로 채워짐 */
+    border-color: #0081ba;     /* 테두리는 더 진하게 */
+    color: #ffffff;            /* 글자는 흰색으로 반전 */
+    box-shadow: 0 4px 8px rgba(0, 161, 233, 0.3); /* 그림자도 진하게 */
+}
+
+/* 뱃지 스타일 (AI용) */
+.badge-meta {
+    font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 500;
+    background: #f8f9fa; color: #666; border: 1px solid #e9ecef;
+}
+.badge-dept { background: #EEF2FF; color: #00A1E9; }
+.badge-cat { background: #f9f0ff; color: #531dab; }
+.badge-priority { font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+.p-critical { background: #fff1f0; color: #cf1322; border: 1px solid #ffa39e; }
+.p-high { background: #fff7e6; color: #d46b08; border: 1px solid #ffd591; }
+
+/* =========================================
+   [New] Action Items 스타일 (버튼 & 체크박스)
+   ========================================= */
+
+/* 1. 추가 버튼 (작고 심플하게) */
+.btn-add-todo {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-add-todo:hover {
+    background-color: #f0f0f0;
+    color: #00A1E9; /* 브랜드 컬러 */
+    border-color: #00A1E9;
+}
+
+/* 2. 할 일 리스트 아이템 */
+.todo-item-row {
+    display: flex;
+    align-items: flex-start; /* 텍스트가 길어도 위쪽 정렬 */
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #333;
+    line-height: 1.5;
+}
+
+/* 3. 체크박스 커스텀 (위치 조정) */
+.ai-todo-checkbox {
+    margin-top: 3px; /* 텍스트 높이와 맞춤 */
+    cursor: pointer;
+    accent-color: #00A1E9; /* 체크 색상을 파란색으로 */
+}
+
+/* 4. 라벨 (클릭 가능하게) */
+.todo-item-row label {
+    cursor: pointer;
+}
+
+/* =========================
+   Inbox 강조 강화 (기존 디자인 유지 + 더 또렷하게)
+   ========================= */
+
+/* 🔴 빨강 */
+.mail-item.priority-critical{
+  background: linear-gradient(90deg, #fff1f0 0%, #ffffff 70%);
+  border-left-color: #ff4d4f;
+  box-shadow: inset 0 0 0 1px rgba(255, 77, 79, 0.12);
+}
+.mail-item.priority-critical.unread{
+  box-shadow: inset 0 0 0 1px rgba(255, 77, 79, 0.22), 0 1px 6px rgba(0,0,0,0.04);
+}
+.mail-item.priority-critical:hover{
+  background: linear-gradient(90deg, #ffccc7 0%, #ffffff 70%);
+}
+
+/* 🟠 주황 */
+.mail-item.priority-high{
+  background: linear-gradient(90deg, #fff7e6 0%, #ffffff 75%);
+  border-left-color: #fa8c16;
+  box-shadow: inset 0 0 0 1px rgba(250, 140, 22, 0.12);
+}
+.mail-item.priority-high.unread{
+  box-shadow: inset 0 0 0 1px rgba(250, 140, 22, 0.20), 0 1px 6px rgba(0,0,0,0.03);
+}
+.mail-item.priority-high:hover{
+  background: linear-gradient(90deg, #ffe7ba 0%, #ffffff 75%);
+}
+
+/* 🔴 Critical (빨강) */
+.badge-critical{
+  background: #fff1f0;
+  color: #cf1322;
+  border: 1px solid #ffa39e;
+}
+
+/* 배지: 긴급 전용(민원 배지는 기존 badge-complaint 사용 중) */
+.badge-urgent{
+  background: #fff7e6;
+  color: #d46b08;
+  border: 1px solid #ffd591;
+}
+.write-layout { display:flex; gap:16px; }
+.write-editor { flex: 1; min-width: 0; }
+.write-ai { width: 360px; flex-shrink:0; position: sticky; top: 10px; height: calc(100vh - 120px); overflow:auto; }
+.ai-card { background:#fff; border:1px solid #eee; border-radius:10px; padding:14px; margin-bottom:12px; }
+.ai-card-title { font-weight:800; font-size:13px; margin-bottom:10px; }
+.ai-textarea { width:100%; border:1px solid #e5e5e5; border-radius:8px; padding:10px; font-size:12px; }
+.ai-btn-row { display:flex; gap:8px; margin-top:8px; }
+.ai-status { margin-top:8px; font-size:11px; color:#888; }
+
+/* 작성 박스 */
+.compose-box{
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+}
+.compose-box-header{
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #444;
+  background: #fafafa;
+  border-bottom: 1px solid #eee;
+}
+.compose-box-body{
+  min-height: 380px;
+  padding: 14px 14px 40px 14px;
+  font-size: 14px;
+  line-height: 1.7;
+  outline: none;
+}
+
+/* 원문 박스 */
+.quote-box{
+  margin-top: 14px;
+  border: 1px solid #e6e6e6;
+  border-radius: 10px;
+  background: #fcfcfc;       /* ✅ 흰색과 확실히 구분 */
+  overflow: hidden;
+}
+.quote-box-header{
+  padding: 10px 12px;
+  display:flex;
+  justify-content: space-between;
+  align-items:center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #555;
+  background: #f3f6ff;       /* ✅ 살짝 블루톤 헤더 */
+  border-bottom: 1px solid #e6ecff;
+}
+.quote-hint{
+  font-size: 11px;
+  font-weight: 500;
+  color: #7a7a7a;
+}
+.quote-box-body{
+  padding: 14px;
+  color: #555;
+  font-size: 13px;
+  line-height: 1.7;
+  border-left: 3px solid #00A1E9;  /* ✅ 기존 강조 유지 */
+}
+
+/* 박스 사이 구분 더 강하게 하고 싶으면(선택) */
+.quote-box{ box-shadow: 0 1px 0 rgba(0,0,0,0.03); }
+:root{
+  --sanae-blue:#00A1E9;
+  --sanae-blue-soft:#e9f7ff;
+  --sanae-border:#e6e6e6;
+  --sanae-text:#333;
+}
+
+/* 공통 버튼(하늘색 테마) */
+.btn-sanae {
+  border: 1px solid var(--sanae-border);
+  background: #fff;
+  padding: 6px 10px;
+  border-radius: 2px;
+  font-size: 12px;
+  color: var(--sanae-text);
+  cursor: pointer;
+  transition: all .12s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.btn-sanae:hover { background:#f9f9f9; border-color:#b5b5b5; }
+
+.btn-sanae-primary{
+  border-color: var(--sanae-blue);
+  color: var(--sanae-blue);
+  background: #fff;
+}
+.btn-sanae-primary:hover{
+  background: var(--sanae-blue-soft);
+  border-color: var(--sanae-blue);
+}
+
+.btn-sanae-fill{
+  background: var(--sanae-blue);
+  border-color: var(--sanae-blue);
+  color:#fff;
+}
+.btn-sanae-fill:hover{ filter: brightness(0.96); }
+
+/* AI 카드 톤도 통일 */
+.ai-card{
+  background:#fff;
+  border:1px solid var(--sanae-border);
+  border-radius: 10px;
+}
+.ai-card-title{
+  font-weight: 800;
+  font-size: 12px;
+  color:#222;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 10px;
+}
+.ai-btn-row{ gap:6px; }
+
+.ai-chat-intent{
+  display:flex;
+  gap:8px;
+  margin: 8px 0 10px 0;
+}
+.ai-chat-input{
+  flex:1;
+  border: 1px solid #e6e6e6;
+  border-radius: 6px;
+  padding: 9px 10px;
+  font-size: 12px;
+  background: #fff;
+}
+.ai-chat-input:focus{
+  outline:none;
+  border-color: var(--sanae-blue);
+  box-shadow: 0 0 0 2px rgba(0,161,233,0.12);
+}
+/* 검색 결과 드롭다운 스타일 */
+.search-dropdown {
+    position: absolute;
+    top: calc(100% + 5px); /* 검색창 바로 아래 배치 */
+    left: 0;
+    width: 100%;
+    max-height: 400px;
+    background: #fff;
+    border: 1px solid #E1E1E1;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15); /* 입체감 부여 */
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+/* 개별 검색 결과 아이템 */
+.search-item {
+    padding: 12px 15px;
+    border-bottom: 1px solid #F0F0F0;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.search-item:last-child { border-bottom: none; }
+.search-item:hover { background-color: #F8F9FA; }
+
+.search-item .subject {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.search-item .sender {
+    font-size: 11px;
+    color: #888;
+}
+/* ✅ To-do 리스트 컨테이너 */
+/* 1) 카드 자체 패딩 늘리기 */
+.card{
+  padding: 18px 22px;   /* 기존보다 여유 */
+}
+
+/* 2) 카드 타이틀 아래 여백 */
+.card-title{
+  margin-bottom: 12px;
+}
+
+#dashboard-todo-list { margin-top: 10px; }
+
+/* ✅ todo-item: 박스 제거 → 라인 리스트 */
+.todo-item{
+  padding: 12px 0;              /* 좌우는 카드 패딩으로 먹고, 아이템은 0 */
+  margin: 0;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  cursor: pointer;
+
+  display:flex;
+  align-items:flex-start;
+  gap: 12px;
+}
+/* ✅ 항목 사이 구분선 */
+#dashboard-todo-list .todo-item{
+  border-bottom: 1px solid #eef1f4 !important;
+}
+#dashboard-todo-list .todo-item:last-child{
+  border-bottom: 0 !important;
+}
+
+
+
+/* ✅ 제목(크기 줄이기 + 줄바꿈 깔끔) */
+.todo-title{
+  font-size:13px;
+  font-weight:600;
+  color:#222;
+  line-height:1.45;
+  word-break:break-word;
+}
+
+/* ✅ 메타(날짜/출처) */
+.todo-meta{
+  margin-top:6px;
+  font-size:11px;
+  color:#8a8f98;
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+.todo-title.done{
+  text-decoration:line-through;
+  opacity:.55;
+}
+
+/* ✅ 우측 액션(휴지통) */
+.todo-actions{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  padding-left: 8px;
+}
+.todo-icon-btn{
+  border:0;
+  background:transparent;
+  cursor:pointer;
+  padding:4px;
+  color:#a0a6af;
+  font-size:12px;
+}
+.todo-icon-btn:hover{ color:#3182F6; }
+
+
