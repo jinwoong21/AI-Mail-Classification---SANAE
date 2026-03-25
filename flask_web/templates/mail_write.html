@@ -1,0 +1,523 @@
+{% extends "base.html" %}
+{% block title %}메일 쓰기 - SANAE AI{% endblock %}
+
+{% block content %}
+<style>
+    .email-wrapper {
+        /* 1. 부모(base.html)가 가진 여백을 무시하고 왼쪽으로 강제로 당김 */
+        /* 이 숫자를 -30px, -50px 등으로 조절해서 딱 맞추세요 */
+        margin-left: -30px !important;
+
+        /* 2. 당긴 만큼 전체 너비가 줄어들지 않도록 보정 (선택사항) */
+        /* width: calc(100% + 40px) !important; */
+    }
+
+    .email-sidebar {
+        width: 200px !important;
+        min-width: 200px !important;
+    }
+</style>
+<div class="email-wrapper">
+
+    <aside class="email-sidebar">
+        <a href="/mail_write" class="btn-compose">메일 쓰기</a>
+        <ul class="email-menu-list">
+            <li><a href="/mail_inbox" class="email-menu-item"><div><i class="fa-solid fa-inbox"></i> 받은메일함</div></a></li>
+            <li><a href="#" class="email-menu-item"><div><i class="fa-regular fa-star"></i> 중요 메일함</div></a></li>
+            <li><a href="/mail_sent" class="email-menu-item"><div><i class="fa-regular fa-paper-plane"></i> 보낸메일함</div></a></li>
+            <li><a href="/mail_drafts" class="email-menu-item"><div><i class="fa-regular fa-file-lines"></i> 임시보관함</div></a></li>
+            <li><a href="/mail_spam" class="email-menu-item"><div><i class="fa-solid fa-triangle-exclamation"></i> 스팸메일함</div></a></li>
+            <li><a href="/mail_trash" class="email-menu-item"><div><i class="fa-regular fa-trash-can"></i> 휴지통</div></a></li>
+        </ul>
+    </aside>
+
+    <main class="email-main-area" style="position: relative; overflow: hidden;">
+
+        <div class="email-toolbar border-bottom" style="height: 54px; padding: 0 20px;">
+            <div class="toolbar-left gap-2">
+                <button type="button" class="btn-tool-naver fw-bold text-primary" onclick="submitMail()" style="border-color: #00A1E9; color: #00A1E9;">
+                    <i class="fa-regular fa-paper-plane me-1"></i>보내기
+                </button>
+
+                <div class="divider-vertical mx-2"></div>
+
+                <button type="button" class="btn-tool-naver">미리보기</button>
+                <button type="button" class="btn-tool-naver">임시저장</button>
+            </div>
+        </div>
+
+        <div class="email-scroll-area">
+
+          <div class="write-layout">
+
+            <!-- LEFT: 작성 영역 -->
+            <section class="write-editor">
+              <div class="email-document-container" style="padding: 20px 25px;">
+                <form id="mail-form" action="/send_from_write" method="POST">
+
+                  <div class="write-meta-table mb-4">
+                    <div class="write-row">
+                      <div class="write-label">받는사람</div>
+                      <div class="write-input-wrapper">
+                        <input type="text" name="receivers" class="write-input-clean"
+                               value="{{ to_addr }}" placeholder="이메일 주소 입력">
+                      </div>
+                    </div>
+
+                    <div class="write-row">
+                      <div class="write-label">참조</div>
+                      <div class="write-input-wrapper">
+                        <input type="text" name="cc" class="write-input-clean" placeholder="">
+                      </div>
+                    </div>
+
+                    <div class="write-row">
+                      <div class="write-label">제목</div>
+                      <div class="write-input-wrapper">
+                        <input type="text" name="subject" class="write-input-clean fw-bold"
+                               value="{{ subject }}" placeholder="제목을 입력하세요">
+                      </div>
+                    </div>
+                  </div>
+
+                  <hr class="doc-divider">
+
+                  <div class="editor-wrapper">
+                      <textarea name="content" id="hidden-content" style="display:none;"></textarea>
+
+                      <!-- ✅ 작성 박스 -->
+                      <div class="compose-box">
+                        <div class="compose-box-header">
+                          <span>작성 내용</span>
+                        </div>
+                        <div id="draft-area" contenteditable="true" spellcheck="false" class="compose-box-body">
+                          <p><br></p>
+                        </div>
+                      </div>
+
+                      {% if content %}
+                      <!-- ✅ 원문 박스 -->
+                      <div class="quote-box">
+                        <div class="quote-box-header">
+                          <span>이전 메일(원문)</span>
+                          <span class="quote-hint">인용 영역(수정 불가)</span>
+                        </div>
+                        <div id="quoted-area" class="quote-box-body" contenteditable="false">
+                          {{ content | replace('\n', '<br>') | safe }}
+                        </div>
+                      </div>
+                      {% endif %}
+                  </div>
+                </form>
+              </div>
+            </section>
+
+            <!-- RIGHT: AI 영역 -->
+            <aside class="write-ai">
+              <div class="ai-grid">
+
+                <!-- AI 답장 초안 -->
+                <div class="ai-card">
+                  <div class="ai-card-title">AI 답장 초안</div>
+
+                  <!-- (자동 생성된 summary 저장/표시) -->
+                  <textarea id="ai-summary-box" class="ai-textarea" rows="10" readonly
+                            placeholder="답장으로 들어오면 요약이 자동 생성됩니다."></textarea>
+
+                  <textarea id="ai-reply-box" class="ai-textarea" rows="10"
+                            placeholder="초안이 여기 생성됩니다."></textarea>
+                  <div class="ai-chat-intent">
+                      <input id="reply-intent-chat" class="ai-chat-input" type="text"
+                             placeholder="의도 입력: 예) 거절하고 대안 일정 제시 / 동의하고 오늘 내로 처리 / 추가자료(로그) 요청" />
+                      <button type="button" class="btn-sanae btn-sanae-primary" onclick="genReplyDraft()">초안 생성</button>
+                  </div>
+
+
+                  <div class="ai-btn-row">
+                    <button type="button" class="btn-sanae btn-sanae-fill" onclick="insertReplyToEditor()">본문에 삽입</button>
+                  </div>
+                  <div id="ai-reply-status" class="ai-status"></div>
+                </div>
+
+                <!-- AI 린팅 -->
+                <div class="ai-card">
+                  <div class="ai-card-title">AI 린팅</div>
+                  <textarea id="ai-fix-box" class="ai-textarea" rows="16"
+                            placeholder="린팅 결과가 여기 표시됩니다."></textarea>
+
+                  <div class="ai-btn-row">
+                    <button type="button" class="btn-sanae btn-sanae-primary" onclick="runLinting()">린팅 실행</button>
+                    <button type="button" class="btn-sanae btn-sanae-fill" onclick="applyLintToDraft()">적용</button>
+                  </div>
+                  <div id="ai-fix-status" class="ai-status"></div>
+                </div>
+
+              </div>
+            </aside>
+
+          </div>
+        </div>
+
+
+        <div id="ai-panel" class="ai-panel shadow-lg">
+            <div class="ai-panel-header">
+                <span><i class="fa-solid fa-robot me-2 text-primary"></i>AI Writer</span>
+                <button onclick="toggleAiPanel()" class="btn-close-custom"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="ai-panel-body">
+                <div class="ai-tabs mb-3">
+                    <button class="ai-tab active" onclick="switchTab('fix')">문장 교정</button>
+                    <button class="ai-tab" onclick="switchTab('draft')">초안 작성</button>
+                </div>
+
+                <div id="tab-fix" class="tab-content">
+                    <p class="text-muted text-small mb-3">
+                        작성한 내용을 분석하여<br>더 정중하고 자연스러운 표현으로 다듬어줍니다.
+                    </p>
+                    <button class="btn btn-outline-primary btn-sm w-100" onclick="runAiAction('fix')">
+                        <i class="fa-solid fa-check-double me-1"></i> 교정 시작
+                    </button>
+                </div>
+
+                <div id="tab-draft" class="tab-content" style="display: none;">
+                    <textarea id="draft-intent" class="form-control mb-2 text-small bg-light border-0" rows="4"
+                              placeholder="예: 제안해주신 일정인 15일 오후 2시에 미팅 가능하다고 정중하게 답장해줘."></textarea>
+                    <button class="btn btn-primary btn-sm w-100" onclick="runAiAction('reply')">
+                        <i class="fa-solid fa-pen-nib me-1"></i> 초안 생성
+                    </button>
+                </div>
+
+                <div id="ai-result-area" class="mt-4" style="display: none;">
+                    <hr class="border-secondary opacity-25">
+                    <label class="fw-bold text-primary mb-2" style="font-size: 11px;">AI 제안 내용</label>
+
+                    <div class="position-relative">
+                        <textarea id="ai-result-text" class="form-control bg-light border-0 text-small" rows="10"></textarea>
+                        <div id="ai-loading" class="ai-loading-overlay" style="display: none;">
+                            <div class="spinner-border text-primary spinner-border-sm" role="status"></div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-dark btn-sm w-100 mt-2" onclick="applyToEditor()">
+                        <i class="fa-solid fa-paste me-1"></i> 본문에 적용
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<style>
+    /* 1. 툴바 스타일 (네이버 스타일 버튼) */
+    .btn-tool-naver {
+        border: 1px solid #d6d6d6;
+        background: #fff;
+        padding: 6px 12px;
+        border-radius: 2px;
+        font-size: 13px; font-weight: 400; color: #333;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: all 0.1s;
+    }
+    .btn-tool-naver:hover { background-color: #f9f9f9; border-color: #b5b5b5; }
+
+    .divider-vertical { width: 1px; height: 16px; background: #e1e1e1; margin: 0 8px; }
+
+    /* 2. 입력 폼 스타일 (상세 화면의 메타 테이블 느낌) */
+    .write-row {
+        display: flex; align-items: center;
+        margin-bottom: 12px;
+    }
+    .write-label {
+        width: 80px; /* 라벨 너비 고정 */
+        font-size: 13px; color: #888; font-weight: 400;
+        flex-shrink: 0;
+    }
+    .write-input-wrapper {
+        flex: 1;
+    }
+    /* 인풋창: 테두리 없애고 텍스트처럼 보이게 (포커스 시 밑줄) */
+    .write-input-clean {
+        width: 100%;
+        border: none; border-bottom: 1px solid transparent; /* 평소엔 투명 */
+        padding: 4px 0;
+        font-size: 14px; color: #333;
+        outline: none; background: transparent;
+        transition: border-color 0.2s;
+    }
+    .write-input-clean:focus {
+        border-bottom-color: #00A1E9; /* 포커스 시 파란 밑줄 */
+    }
+    .write-input-clean::placeholder { color: #ccc; }
+
+    /* 3. 에디터 영역 */
+    .doc-divider { border: 0; border-top: 1px solid #e5e5e5; margin: 20px 0 30px 0; }
+
+    #editor-body {
+        min-height: 400px;
+        outline: none;
+        font-size: 14px; line-height: 1.6; color: #333;
+        padding-bottom: 50px;
+    }
+
+    /* 인용구 (답장 시) */
+    .quoted-text-area {
+        margin-top: 30px;
+        border-left: 2px solid #00A1E9;
+        padding-left: 15px;
+        color: #666; font-size: 13px;
+    }
+
+    /* 4. AI 패널 스타일 */
+    .ai-panel {
+        position: absolute; top: 0; right: -320px; width: 300px; height: 100%;
+        background: #fff; border-left: 1px solid #ddd; z-index: 1000;
+        transition: right 0.3s ease; display: flex; flex-direction: column;
+    }
+    .ai-panel.open { right: 0; }
+    .ai-panel-header { padding: 15px; background: #fcfcfc; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; font-weight: 700; color: #444; font-size: 14px; }
+    .ai-panel-body { padding: 20px; flex: 1; overflow-y: auto; }
+
+    .ai-tabs { display: flex; border-bottom: 1px solid #eee; }
+    .ai-tab { flex: 1; border: none; background: none; padding: 10px 0; font-size: 13px; color: #888; border-bottom: 2px solid transparent; cursor: pointer; }
+    .ai-tab.active { color: #00A1E9; border-bottom-color: #00A1E9; font-weight: 700; }
+
+    .text-small { font-size: 12px; }
+    .btn-close-custom { border: none; background: none; color: #999; }
+    .ai-loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center; z-index: 5; }
+</style>
+
+<script>
+    // 1. 메일 전송
+    function submitMail() {
+        const editorContent = document.getElementById('editor-body').innerHTML;
+        document.getElementById('hidden-content').value = editorContent;
+        document.getElementById('mail-form').submit();
+    }
+
+    // 2. AI 패널 제어
+    function toggleAiPanel() {
+        document.getElementById('ai-panel').classList.toggle('open');
+    }
+    function switchTab(tabName) {
+        document.querySelectorAll('.ai-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+        event.target.classList.add('active');
+        document.getElementById('tab-' + tabName).style.display = 'block';
+        document.getElementById('ai-result-area').style.display = 'none';
+    }
+
+    // 3. AI API 호출
+    async function runAiAction(action) {
+        const resultArea = document.getElementById('ai-result-area');
+        const resultText = document.getElementById('ai-result-text');
+        const loading = document.getElementById('ai-loading');
+
+        resultArea.style.display = 'block';
+        loading.style.display = 'flex';
+        resultText.value = '';
+
+        let textToProcess = document.getElementById('editor-body').innerText;
+        let intent = document.getElementById('draft-intent').value;
+
+        if (action === 'reply' && !intent.trim()) {
+            alert("의도를 입력해주세요.");
+            loading.style.display = 'none'; return;
+        }
+
+        try {
+            const response = await fetch('/api/gemini/execute', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: action, text: textToProcess, intent: intent })
+            });
+            const data = await response.json();
+            resultText.value = (data.status === 'SUCCESS') ? data.result : "오류: " + data.message;
+        } catch (e) {
+            console.error(e);
+            resultText.value = "통신 오류 발생";
+        } finally {
+            loading.style.display = 'none';
+        }
+    }
+
+    // 4. 에디터 적용
+<!--    function applyToEditor() {-->
+<!--        const aiText = document.getElementById('ai-result-text').value;-->
+<!--        if (!aiText) return;-->
+<!--        const htmlContent = aiText.replace(/\n/g, '<br>');-->
+<!--        const editor = document.getElementById('editor-body');-->
+<!--        editor.innerHTML = `<p>${htmlContent}</p><br>` + editor.innerHTML;-->
+<!--        toggleAiPanel();-->
+<!--    }-->
+
+      // 1) 메일 전송 (draft + quoted 합쳐서 hidden-content에 넣기)
+      function submitMail() {
+        const draftHTML = document.getElementById('draft-area').innerHTML;
+        const quoted = document.getElementById('quoted-area');
+        const quotedHTML = quoted ? `<br><br>${quoted.outerHTML}` : "";
+
+        document.getElementById('hidden-content').value = draftHTML + quotedHTML;
+        document.getElementById('mail-form').submit();
+      }
+
+      // 공통: Gemini 호출
+      async function callGemini(action, text, intent="") {
+        const res = await fetch('/api/gemini/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, text, intent })
+        });
+        return res.json();
+      }
+
+      // 2) 답장으로 들어오면 원문 요약 자동 생성
+      let AUTO_SUMMARY = "";
+
+      async function autoSummaryIfReply() {
+        const quoted = document.getElementById('quoted-area');
+        if (!quoted) return; // 답장 아닌 경우
+
+        const summaryBox = document.getElementById('ai-summary-box');
+        const status = document.getElementById('ai-reply-status');
+
+        status.innerText = "원문 요약 생성 중...";
+        const raw = quoted.innerText.trim();
+
+        try {
+          const data = await callGemini('summary', raw);
+          if (data.status === 'SUCCESS') {
+            AUTO_SUMMARY = data.result || "";
+            summaryBox.value = AUTO_SUMMARY;
+            status.innerText = "요약 완료 ✅";
+          } else {
+            status.innerText = "요약 실패: " + (data.message || "");
+          }
+        } catch (e) {
+          console.error(e);
+          status.innerText = "요약 통신 오류";
+        }
+      }
+
+      // 3) 초안 생성 (요약 + 원문 기반)
+      async function genReplyDraft() {
+          const quoted = document.getElementById('quoted-area');
+          if (!quoted) { alert("답장 원문이 없어요 😭"); return; }
+
+          const status = document.getElementById('ai-reply-status');
+          const out = document.getElementById('ai-reply-box');
+
+          // ✅ 채팅 의도 읽기
+          const chatIntent = (document.getElementById('reply-intent-chat')?.value || "").trim();
+          const intent = chatIntent
+            ? `아래 의도를 반영해서 정중하고 실무적으로 답장 초안을 작성해줘: ${chatIntent}`
+            : "정중하고 실무적으로 답장 초안을 작성해줘. 핵심만 간결하게.";
+
+          status.innerText = "초안 생성 중...";
+          const raw = quoted.innerText.trim();
+          const ctx = `원문:\n${raw}\n\n요약:\n${AUTO_SUMMARY || ""}`;
+
+          try {
+            const data = await callGemini('reply', ctx, intent);
+            out.value = (data.status === 'SUCCESS') ? data.result : ("오류: " + data.message);
+            status.innerText = "초안 완료 ✅";
+          } catch (e) {
+            console.error(e);
+            out.value = "통신 오류 발생";
+            status.innerText = "초안 통신 오류";
+          }
+      }
+
+
+      // 4) 초안 → 본문(draft-area)에 삽입
+      function insertReplyToEditor() {
+        const draft = document.getElementById('ai-reply-box').value.trim();
+        if (!draft) return;
+
+        const draftArea = document.getElementById('draft-area');
+        draftArea.innerHTML = `<p>${draft.replace(/\n/g, "<br>")}</p><br>` + draftArea.innerHTML;
+      }
+
+      // 5) 린팅: 내가 쓰는 draft-area만 교정
+      async function runLinting() {
+        const status = document.getElementById('ai-fix-status');
+        const out = document.getElementById('ai-fix-box');
+
+        const text = document.getElementById('draft-area').innerText.trim();
+        if (!text) { status.innerText = "본문이 비어있음 😭"; return; }
+
+        status.innerText = "린팅 중...";
+        out.value = "";
+
+        try {
+          const data = await callGemini('fix', text);
+          out.value = (data.status === 'SUCCESS') ? data.result : ("오류: " + data.message);
+          status.innerText = "린팅 완료 ✅";
+        } catch (e) {
+          console.error(e);
+          out.value = "통신 오류 발생";
+          status.innerText = "린팅 통신 오류";
+        }
+      }
+
+      function applyLintToDraft() {
+        const fixed = document.getElementById('ai-fix-box').value.trim();
+        if (!fixed) return;
+
+        document.getElementById('draft-area').innerHTML = fixed.replace(/\n/g, "<br>");
+      }
+
+      async function autoSummaryIfReply() {
+          const quoted = document.getElementById('quoted-area');
+          if (!quoted) return; // 답장 아닌 경우
+
+          // ✅ 0) 원문 맨 앞 공백/BR/빈P 제거 (상단 여백 원인 제거)
+          quoted.innerHTML = quoted.innerHTML.trimStart();
+          quoted.innerHTML = quoted.innerHTML.replace(/^(<br\s*\/?>\s*)+/i, "");
+          quoted.innerHTML = quoted.innerHTML.replace(/^<p>\s*(<br\s*\/?>)?\s*<\/p>/i, "");
+
+          // 더 강하게: 앞쪽 빈 노드 반복 제거
+          while (quoted.firstChild) {
+            const n = quoted.firstChild;
+
+            if (n.nodeType === Node.TEXT_NODE && !n.textContent.trim()) {
+              quoted.removeChild(n); continue;
+            }
+            if (n.nodeType === Node.ELEMENT_NODE && n.tagName === "BR") {
+              quoted.removeChild(n); continue;
+            }
+            if (n.nodeType === Node.ELEMENT_NODE) {
+              const html = n.innerHTML.replace(/<br\s*\/?>/gi, "").trim();
+              if (html === "") { quoted.removeChild(n); continue; }
+            }
+            break;
+          }
+
+          // ✅ 1) 기존 요약 로직 그대로
+          const summaryBox = document.getElementById('ai-summary-box');
+          const status = document.getElementById('ai-reply-status');
+
+          status.innerText = "원문 요약 생성 중...";
+          const raw = quoted.innerText.trim();
+
+          try {
+            const data = await callGemini('summary', raw);
+            if (data.status === 'SUCCESS') {
+              AUTO_SUMMARY = data.result || "";
+              summaryBox.value = AUTO_SUMMARY;
+              status.innerText = "요약 완료 ✅";
+            } else {
+              status.innerText = "요약 실패: " + (data.message || "");
+            }
+          } catch (e) {
+            console.error(e);
+            status.innerText = "요약 통신 오류";
+          }
+        }
+
+      document.addEventListener("DOMContentLoaded", autoSummaryIfReply);
+
+
+</script>
+{% endblock %}

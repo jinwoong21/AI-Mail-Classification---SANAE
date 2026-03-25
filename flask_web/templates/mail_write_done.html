@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block body_class %}mail-page{% endblock %}
+{% block main_content %}
+
+<div class="mail-layout">
+
+    {# 메일 전용 사이드바 공통 include #}
+    {% include "partials/mail_sidebar.html" %}
+
+    <!-- 우측: 자동 분류 및 라우팅 화면 -->
+    <section class="mail-compose-panel">
+
+        <div class="breadcrumb">
+            <span>[Home] &gt; 보낸 메일함</span>
+        </div>
+
+        <div class="draft-saved-wrapper">
+            <div class="draft-saved-icon">
+                <i class="fas fa-paper-plane"></i>
+            </div>
+            <div class="draft-saved-message">
+                메일이 보내졌습니다.
+            </div>
+
+            <button class="btn-draft-move" onclick="location.href='/mail_write'">
+                메일쓰기 화면으로 돌아가기
+            </button>
+        </div>
+    </section>
+</div>
+
+{% endblock %}
