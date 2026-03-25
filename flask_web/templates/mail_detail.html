@@ -1,0 +1,382 @@
+{% extends "base.html" %}
+
+{% block title %}{{ email.subject }} - 메일 읽기{% endblock %}
+
+{% block content %}
+<style>
+    /* 1. 레이아웃 보정 */
+    .email-wrapper {
+        margin-left: -30px !important;
+    }
+    .email-sidebar {
+        width: 200px !important;
+        min-width: 200px !important;
+    }
+    /* ⚡ 수정: email-main-area에 padding: 0 및 flex 속성 추가 */
+    .email-main-area {
+        flex: 1;
+        padding: 0; /* 받은메일함과 통일: 툴바가 끝까지 확장됨 */
+        background-color: #fff;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    /* 2. [핵심 수정] 본문 텍스트 겹침 해결 & 가독성 향상 */
+    .doc-body {
+        font-size: 15px;
+        line-height: 1.8 !important; /* 줄 간격 넓게 (겹침 해결) */
+        color: #333;
+        padding: 20px 0;
+    }
+
+    .content-text {
+        white-space: pre-wrap; /* 줄바꿈 보존 */
+        word-break: break-all; /* 긴 단어 줄바꿈 */
+        line-height: 1.8 !important; /* 이중 안전장치 */
+    }
+
+    /* 3. 네이버 스타일 헤더 */
+    .naver-doc-header { margin-bottom: 20px; }
+    .naver-subject-row { display: flex; align-items: center; margin-bottom: 15px; }
+    .naver-subject-text { font-size: 18px; font-weight: 700; color: #000; margin-left: 8px; }
+
+    .naver-meta-table { font-size: 13px; color: #333; }
+    .naver-meta-row { display: flex; margin-bottom: 8px; }
+    .meta-label { width: 80px; color: #888; }
+
+    .sender-pill { background: #eaf4fc; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; }
+    .recipient-badge { background: #f0f0f0; padding: 1px 6px; border-radius: 4px; font-size: 11px; color: #555; margin-right: 4px; }
+
+    .doc-divider { border: 0; border-top: 1px solid #e5e5e5; margin: 20px 0; }
+
+    /* 4. AI 리포트 스타일 */
+    .ai-report-section { background: #fcfcfc; border: 1px solid #eee; border-radius: 12px; padding: 20px; margin-top: 30px; }
+    .ai-dashboard-grid { display: grid; grid-template-columns: 1fr 1fr 260px; gap: 20px; }
+    .ai-card { background: #fff; border: 1px solid #e1e1e1; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; }
+    .ai-card-label { font-size: 12px; font-weight: 700; color: #00A1E9; margin-bottom: 10px; }
+
+    /* 로딩 스피너 */
+    .spinner-area { text-align: center; color: #999; font-size: 13px; padding: 10px; }
+</style>
+
+<div class="email-wrapper">
+    <aside class="email-sidebar">
+        <a href="/mail_write" class="btn-compose">메일 쓰기</a>
+        <ul class="email-menu-list">
+            <li><a href="/mail_inbox" class="email-menu-item active"><div><i class="fa-solid fa-inbox"></i> 받은메일함</div></a></li>
+            <li><a href="#" class="email-menu-item"><div><i class="fa-regular fa-star"></i> 중요 메일함</div></a></li>
+            <li><a href="/mail_sent" class="email-menu-item"><div><i class="fa-regular fa-paper-plane"></i> 보낸메일함</div></a></li>
+            <li><a href="/mail_drafts" class="email-menu-item"><div><i class="fa-regular fa-file-lines"></i> 임시보관함</div></a></li>
+            <li><a href="/mail_spam" class="email-menu-item"><div><i class="fa-solid fa-triangle-exclamation"></i> 스팸메일함</div></a></li>
+            <li><a href="/mail_trash" class="email-menu-item"><div><i class="fa-regular fa-trash-can"></i> 휴지통</div></a></li>
+        </ul>
+    </aside>
+
+    <main class="email-main-area">
+        <div class="email-toolbar border-bottom" style="height: 54px; padding: 0 20px;">
+            <div class="toolbar-left gap-2">
+                <a href="/mail_inbox" class="btn-tool-naver"><i class="fa-solid fa-arrow-left"></i></a>
+                <div class="divider-vertical mx-2"></div>
+                <button class="btn-tool-naver" onclick="goToReplyPage()"><i class="fa-solid fa-reply me-1"></i>답장</button>
+                <button class="btn-tool-naver"><i class="fa-solid fa-share me-1"></i>전달</button>
+                <button class="btn-tool-naver"><i class="fa-regular fa-trash-can me-1"></i>삭제</button>
+            </div>
+        </div>
+
+        <div class="email-scroll-area">
+            <div class="email-document-container" style="padding: 30px;">
+
+                <div class="naver-doc-header">
+                    <div class="naver-subject-row">
+                        <i class="fa-regular fa-star text-warning me-2" style="cursor: pointer;"></i>
+                        <span class="badge-meta badge-dept me-2">{{ email.display_dept }}</span>
+                        {% if email.priority_level == 2 %}
+                             <span class="badge-priority p-critical me-2">CRITICAL</span>
+                        {% endif %}
+                        <span class="naver-subject-text">{{ email.subject }}</span>
+                    </div>
+
+                    <div class="naver-meta-table">
+                        <div class="naver-meta-row">
+                            <div class="meta-label">보낸사람</div>
+                            <div>
+                                <span class="sender-pill">{{ email.sender_name }}</span>
+                                <span class="text-muted ms-1">&lt;{{ email.sender_email }}&gt;</span>
+                            </div>
+                        </div>
+                        <div class="naver-meta-row">
+                            <div class="meta-label">받는사람</div>
+                            <div>
+                                <span class="recipient-badge">나</span>
+                                <span class="text-muted">&lt;test@sanae.com&gt;</span>
+                            </div>
+                        </div>
+                        <div class="naver-meta-row">
+                            <div class="meta-label">날짜</div>
+                            <div class="text-muted">{{ email.received_at.strftime('%Y년 %m월 %d일 (%a) %p %I:%M') }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="doc-divider">
+
+                <div class="doc-body">
+                    <div id="mail-content-original" class="content-text">
+                        {{ email.content | e }}
+                    </div>
+                    <div id="mail-content-translated" class="content-text" style="display: none; color: #0056b3;"></div>
+                </div>
+
+                <div class="d-flex justify-content-end mt-4 pt-3 border-top">
+                    <button id="btn-translate" class="btn-action-outline" onclick="runTranslation()" style="border: 1px solid #00A1E9; background: #f0faff; color: #00A1E9; padding: 8px 16px; border-radius: 6px;">
+                        <i class="fa-solid fa-language"></i> 본문 번역하기
+                    </button>
+                </div>
+
+                <div class="ai-report-section">
+                    <div class="report-header">
+                        <span class="report-title"><i class="fa-solid fa-microchip me-2"></i>AI Intelligence Report</span>
+                        <span class="report-conf">분석 신뢰도 {{ email.ai_confidence }}%</span>
+                    </div>
+
+                    <div class="ai-dashboard-grid">
+                        <div class="ai-card">
+                            <div class="ai-card-label">메일 요약</div>
+
+                            <div id="ai-summary-container">
+                                {% set s = (email.ai_summary or '') %}
+                                {% if s and ('AI 요약 대기중' not in s) %}
+                                    <p class="summary-text">{{ s }}</p>
+                                {% else %}
+                                    <div class="spinner-area" id="summary-spinner">
+                                        <i class="fa-solid fa-circle-notch fa-spin me-2"></i>AI 요약 생성 중...
+                                    </div>
+                                    <p class="summary-text" id="ai-summary-text" style="display:none;"></p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="ai-card">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="ai-card-label mb-0">Action Items</span>
+                                <button type="button" class="btn-add-todo" onclick="addSelectedTodos()">
+                                  <i class="fa-solid fa-plus"></i>
+                                </button>
+                            </div>
+
+                            <div class="spinner-area" id="todo-spinner">
+                                <i class="fa-solid fa-circle-notch fa-spin me-2"></i>할 일 분석 중...
+                            </div>
+                            <ul class="ai-todo-list" id="ai-todo-list" style="display: none; list-style: none; padding: 0;"></ul>
+                        </div>
+
+                        <div class="ai-card">
+                            <div class="ai-card-label">감정 및 도구</div>
+                            <div class="sentiment-row-container d-flex align-items-center gap-2">
+                                <div class="fs-4">
+                                    {% if email.sentiment_score <= 30 %}😡{% elif email.sentiment_score >= 70 %}😊{% else %}😐{% endif %}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar
+                                            {% if email.sentiment_score <= 30 %}bg-danger
+                                            {% elif email.sentiment_score >= 70 %}bg-success
+                                            {% else %}bg-warning{% endif %}"
+                                            role="progressbar"
+                                            style="width: {{ email.sentiment_score }}%">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="fw-bold">{{ email.sentiment_score }}점</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <div id="reply-modal" class="card position-absolute shadow-lg"
+         style="display: none; bottom: 30px; right: 30px; width: 550px; z-index: 1000; border: 1px solid #00A1E9;">
+        <div class="card-header text-white d-flex justify-content-between align-items-center" style="background-color: #00A1E9;">
+            <span class="fs-6 fw-bold"><i class="fa-solid fa-wand-magic-sparkles me-2"></i>AI 답장 초안</span>
+            <i class="fa-solid fa-xmark cursor-pointer" onclick="closeReplyModal()"></i>
+        </div>
+        <div class="card-body bg-white">
+            <div id="reply-loading" class="text-center py-5">
+                <i class="fa-solid fa-circle-notch fa-spin fa-2x text-info mb-3"></i>
+                <p class="text-muted">문맥을 파악하여 답장을 작성 중입니다...</p>
+            </div>
+            <textarea id="reply-textarea" class="form-control border-0" rows="10" style="display: none;"></textarea>
+        </div>
+    </div>
+</div>
+
+<script>
+console.log("[MAIL_DETAIL] script loaded");
+window.addEventListener("error", (e)=>console.error("[MAIL_DETAIL] JS ERROR:", e.message, e.filename, e.lineno));
+</script>
+
+<script>
+    // [핵심] 페이지 로드 시 AI 기능 자동 실행
+    document.addEventListener("DOMContentLoaded", function() {
+        // 1. 할 일 추출 (무조건 실행)
+        fetchAiAction('todo');
+
+        // 2. 요약 정보가 비어있다면 자동 실행 (DB에 없었을 경우)
+        const summaryText = document.getElementById('ai-summary-text');
+        const summarySpinner = document.getElementById('summary-spinner');
+
+        // 만약 스피너가 보인다면(즉, DB 데이터가 없어서 위 HTML에서 분기처리됨) 요청 시작
+        if (summarySpinner) {
+            fetchAiAction('summary');
+        }
+    });
+
+    function getMailText() { return document.getElementById('mail-content-original').innerText; }
+
+    async function callGeminiApi(action, intent = '') {
+      const text = getMailText();
+      try {
+        const response = await fetch('/api/gemini/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, text, intent })
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        // ✅ HTTP 에러(503/500) or status ERROR 방어
+        if (!response.ok || data.status !== "SUCCESS") {
+          return `ERROR: ${data.message || response.statusText || 'unknown error'}`;
+        }
+        return (data.result ?? "").toString();
+      } catch (error) {
+        return `ERROR: ${error}`;
+      }
+    }
+
+
+
+    async function fetchAiAction(action) {
+        if (action === 'todo') {
+            const listEl = document.getElementById('ai-todo-list');
+            const spinEl = document.getElementById('todo-spinner');
+
+            const result = await callGeminiApi('todo');
+
+            spinEl.style.display = 'none';
+            listEl.style.display = 'block';
+
+            if (!result || result.startsWith("ERROR:")) {
+              listEl.innerHTML = `<li class="text-danger small">${result || 'ERROR: empty result'}</li>`;
+              return;
+            }
+
+            const lines = result.split('\n').filter(l => l.trim());
+            if (lines.length === 0 || result.includes("없음")) {
+                listEl.innerHTML = '<li class="text-muted small">추출된 할 일이 없습니다.</li>';
+                return;
+            }
+            listEl.innerHTML = lines.map((l, idx) => {
+                const cleanText = l.replace(/^-\s*/, '').replace(/^\d+\.\s*/, '').replace(/\[.*?\]/g, '');
+                return `<li class="mb-1"><input type="checkbox" class="ai-todo-checkbox me-2" value="${cleanText}"><span>${cleanText}</span></li>`;
+            }).join('');
+        }
+        else if (action === 'summary') {
+            const textEl = document.getElementById('ai-summary-text');
+            const spinEl = document.getElementById('summary-spinner');
+
+            const result = await callGeminiApi('summary');
+
+            if (spinEl) spinEl.style.display = 'none';
+            textEl.style.display = 'block';
+            textEl.innerText = result;
+        }
+    }
+
+    // [번역 기능]
+    async function runTranslation() {
+        const btn = document.getElementById('btn-translate');
+        const orig = document.getElementById('mail-content-original');
+        const trans = document.getElementById('mail-content-translated');
+
+        if (trans.innerText.trim()) {
+            // 이미 번역했으면 토글
+            const isHidden = trans.style.display === 'none';
+            orig.style.display = isHidden ? 'none' : 'block';
+            trans.style.display = isHidden ? 'block' : 'none';
+            btn.innerHTML = isHidden ? '<i class="fa-solid fa-rotate-left"></i> 원문 보기' : '<i class="fa-solid fa-language"></i> 본문 번역하기';
+            return;
+        }
+
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> 번역 중...';
+        btn.disabled = true;
+
+        const res = await callGeminiApi('translate');
+        trans.innerHTML = res.replace(/\n/g, '<br>'); // 줄바꿈 처리
+
+        orig.style.display = 'none';
+        trans.style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-rotate-left"></i> 원문 보기';
+    }
+
+    // [답장 기능]
+    function goToReplyPage() {
+        const emailId = "{{ email.id }}";
+        window.location.href = `/mail_write?reply_to=${emailId}`;
+    }
+
+    function closeReplyModal() { document.getElementById('reply-modal').style.display = 'none'; }
+    const TODO_KEY = "SANAI_DASHBOARD_TODOS";
+    function loadTodos() {
+    try { return JSON.parse(localStorage.getItem(TODO_KEY) || "[]"); }
+    catch { return []; }
+    }
+
+    function saveTodos(list) {
+    localStorage.setItem(TODO_KEY, JSON.stringify(list));
+    }
+
+    function addSelectedTodos() {
+    const checked = [...document.querySelectorAll(".ai-todo-checkbox:checked")];
+    if (checked.length === 0) {
+      alert("추가할 Action Item 체크해줘 😎");
+      return;
+    }
+
+    const emailId = parseInt("{{ email.id }}", 10) || null;
+
+    const todos = loadTodos();
+
+    const newItems = checked
+      .map(cb => decodeURIComponent(cb.value || "").trim())
+      .filter(Boolean)
+      .map(text => ({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+        text,
+        email_id: emailId,
+        is_done: false,
+        created_at: new Date().toISOString()
+      }));
+
+    // ✅ 중복 방지(같은 이메일+같은 텍스트)
+    const merged = [...newItems, ...todos].filter((t, idx, arr) => {
+      const key = (t.email_id ?? "") + "::" + t.text;
+      return idx === arr.findIndex(x => ((x.email_id ?? "") + "::" + x.text) === key);
+    });
+
+    saveTodos(merged);
+
+    checked.forEach(cb => (cb.checked = false));
+    alert(`✅ To-do ${newItems.length}개 대시보드에 추가 완료!`);
+
+    // (옵션) 바로 대시보드로 보내기
+    // window.location.href = "/main";
+    }
+</script>
+{% endblock %}

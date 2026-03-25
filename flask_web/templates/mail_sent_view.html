@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}{{ email.subject or '(제목 없음)' }} - 보낸메일 보기{% endblock %}
+
+{% block content %}
+<style>
+    .email-wrapper { margin-left: -30px !important; }
+    .email-sidebar { width: 200px !important; min-width: 200px !important; }
+
+    /* mail_detail 톤 맞춤 */
+    .doc-body { font-size: 15px; line-height: 1.8 !important; color: #333; padding: 20px 0; }
+    .content-text { white-space: pre-wrap; word-break: break-word; line-height: 1.8 !important; }
+
+    .naver-doc-header { margin-bottom: 20px; }
+    .naver-subject-row { display:flex; align-items:center; margin-bottom: 15px; gap:8px; }
+    .naver-subject-text { font-size: 18px; font-weight: 700; color: #000; }
+
+    .naver-meta-table { font-size: 13px; color: #333; }
+    .naver-meta-row { display: flex; margin-bottom: 8px; }
+    .meta-label { width: 80px; color: #888; }
+
+    .sender-pill { background: #eaf4fc; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; }
+    .recipient-badge { background: #f0f0f0; padding: 1px 6px; border-radius: 4px; font-size: 11px; color: #555; margin-right: 4px; }
+
+    .doc-divider { border: 0; border-top: 1px solid #e5e5e5; margin: 20px 0; }
+</style>
+
+<div class="email-wrapper">
+  <aside class="email-sidebar">
+    <a href="/mail_write" class="btn-compose">메일 쓰기</a>
+    <ul class="email-menu-list">
+      <li><a href="/mail_inbox" class="email-menu-item"><div><i class="fa-solid fa-inbox"></i> 받은메일함</div></a></li>
+      <li><a href="#" class="email-menu-item"><div><i class="fa-regular fa-star"></i> 중요 메일함</div></a></li>
+      <li><a href="/mail_sent" class="email-menu-item active"><div><i class="fa-regular fa-paper-plane"></i> 보낸메일함</div></a></li>
+      <li><a href="/mail_drafts" class="email-menu-item"><div><i class="fa-regular fa-file-lines"></i> 임시보관함</div></a></li>
+      <li><a href="/mail_spam" class="email-menu-item"><div><i class="fa-solid fa-triangle-exclamation"></i> 스팸메일함</div></a></li>
+      <li><a href="/mail_trash" class="email-menu-item"><div><i class="fa-regular fa-trash-can"></i> 휴지통</div></a></li>
+    </ul>
+  </aside>
+
+  <main class="email-main-area">
+    <div class="email-toolbar border-bottom" style="height: 54px; padding: 0 20px;">
+      <div class="toolbar-left gap-2">
+        <a href="/mail_sent" class="btn-tool-naver"><i class="fa-solid fa-arrow-left"></i></a>
+        <div class="divider-vertical mx-2"></div>
+        <a href="/mail_write" class="btn-tool-naver"><i class="fa-regular fa-pen-to-square me-1"></i>새 메일</a>
+      </div>
+    </div>
+
+    <div class="email-scroll-area">
+      <div class="email-document-container" style="padding: 30px;">
+
+        <div class="naver-doc-header">
+          <div class="naver-subject-row">
+            <i class="fa-regular fa-star text-warning" style="cursor:pointer;"></i>
+            <span class="naver-subject-text">{{ email.subject or '(제목 없음)' }}</span>
+          </div>
+
+          <div class="naver-meta-table">
+            <div class="naver-meta-row">
+              <div class="meta-label">보낸사람</div>
+              <div>
+                <span class="sender-pill">{{ email.sender_name or '나' }}</span>
+                {% if email.sender_email %}<span class="text-muted ms-1">&lt;{{ email.sender_email }}&gt;</span>{% endif %}
+              </div>
+            </div>
+
+            <div class="naver-meta-row">
+              <div class="meta-label">받는사람</div>
+              <div>
+                {% set rec = (email.receivers or '').strip() %}
+                {% if rec %}
+                  {% for r in rec.split(',') %}
+                    {% if r|trim %}<span class="recipient-badge">{{ r|trim }}</span>{% endif %}
+                  {% endfor %}
+                {% else %}
+                  <span class="text-muted">-</span>
+                {% endif %}
+              </div>
+            </div>
+
+            {% if email.cc %}
+            <div class="naver-meta-row">
+              <div class="meta-label">참조</div>
+              <div>
+                {% for c in (email.cc or '').split(',') %}
+                  {% if c|trim %}<span class="recipient-badge">{{ c|trim }}</span>{% endif %}
+                {% endfor %}
+              </div>
+            </div>
+            {% endif %}
+
+            <div class="naver-meta-row">
+              <div class="meta-label">날짜</div>
+              <div class="text-muted">
+                {% if email.received_at %}
+                  {% if email.received_at.strftime is defined %}
+                    {{ email.received_at.strftime('%Y년 %m월 %d일 (%a) %p %I:%M') }}
+                  {% else %}
+                    {{ email.received_at }}
+                  {% endif %}
+                {% else %}
+                  -
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <hr class="doc-divider">
+
+        <div class="doc-body">
+          <div class="content-text">
+            {{ (email.content or '') | safe }}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}
